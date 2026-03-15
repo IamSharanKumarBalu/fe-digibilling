@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"d:/digibilling/fe_digistrivebiling/app/dashboard/quotation/[id]/page.js\")",
+      "Bash(\"d:/digibilling/fe_digistrivebiling/app/dashboard/quotation/[id]/edit/page.js\")"
+    ]
+  }
+}

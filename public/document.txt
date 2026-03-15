@@ -1,0 +1,435 @@
+================================================================================
+  DIGISTRIVE BILLING — FEATURE DOCUMENT
+  Last Updated: 27 Feb 2026
+================================================================================
+
+This document tracks all features in the billing application — what is done,
+what is half-done (UI ready but backend not connected), and what still needs
+to be built.
+
+================================================================================
+  SECTION 1 — COMPLETED FEATURES  ✅
+================================================================================
+
+── AUTH ────────────────────────────────────────────────────────────────────────
+
+  ✅ Login page (/login)
+  ✅ Signup page (/signup)
+  ✅ JWT token-based auth (stored in localStorage)
+  ✅ Auth context (useAuth) — protects all dashboard routes
+  ✅ Auto-redirect to /login if not authenticated
+  ✅ Logout button in sidebar
+
+── DASHBOARD HOME (/dashboard) ─────────────────────────────────────────────────
+
+  ✅ Stats cards (Total Revenue, Invoices, Purchases, Customers)
+  ✅ Recent invoices list
+  ✅ Quick action buttons (New Invoice, Add Product, etc.)
+  ✅ Dashboard summary pulled from API
+
+── SIDEBAR / NAVIGATION ────────────────────────────────────────────────────────
+
+  ✅ Collapsible sidebar (expand / collapse toggle)
+  ✅ Collapsible nav groups (Sales, Items, Purchase, Reports & Ledgers)
+  ✅ Shop logo loaded from settings
+  ✅ Active route highlighting
+  ✅ Mobile sidebar (hamburger menu)
+  ✅ User name + email in sidebar footer
+
+  Nav Groups:
+    Sales       → New Invoice, Invoices, Quotations, Payment Receipts,
+                  Sales Returns, Proforma Invoice*, Delivery Challans*
+    Items       → Products, Services
+    Purchase    → Purchases, Purchase Returns
+    Reports &   → Reports, Ledgers
+    Ledgers
+    Standalone  → Suppliers, Inventory, Customers, Expenses, Settings
+
+  (* links exist in nav but pages not yet built)
+
+── INVOICES (/dashboard/invoices) ──────────────────────────────────────────────
+
+  ✅ Invoice list page — search, pagination-ready
+  ✅ Invoice status badges (PAID, UNPAID, PARTIAL)
+  ✅ Quick payment modal from list page
+  ✅ Delete invoice with confirmation
+  ✅ Create new invoice (/dashboard/invoices/new)
+      - Invoice Type: Tax Invoice / Bill of Supply toggle
+      - Customer selection (dropdown search) + inline Add Customer
+      - Invoice date
+      - Tax type: CGST+SGST / IGST / CESS
+      - Add Product items (batch-level dropdown with stock)
+      - Add Service items (UI ready — name input, backend not connected)
+      - Per-item: Qty, Price, GST%, CESS%
+      - GST / CESS hidden for Bill of Supply
+      - Discount field
+      - Round-off auto-calculation
+      - Grand Total
+      - Payment Status (Paid / Unpaid / Partial)
+      - Payment Method (Cash / UPI / Card / Cheque / Bank Transfer)
+      - Paid Amount + Balance display
+      - Payment reference / notes
+  ✅ Invoice detail view (/dashboard/invoices/[id])
+      - Full invoice display with ModernTemplate
+      - Download / Print PDF
+      - WhatsApp share (generates message with amount)
+      - Add Payment, Edit Payment, Delete Payment
+      - Payment history list
+  ✅ Edit invoice (/dashboard/invoices/[id]/edit)
+      - Full edit form (same as create)
+
+  Invoice Templates (for print/PDF):
+  ✅ Modern Template
+  ✅ Tally Portrait Template
+  ✅ Tally Landscape Template
+
+── PURCHASES (/dashboard/purchases) ────────────────────────────────────────────
+
+  ✅ Purchase list page — search, filter
+  ✅ Payment status badges
+  ✅ Quick payment modal from list
+  ✅ Delete purchase with confirmation
+  ✅ Create new purchase (/dashboard/purchases/new)
+      - Supplier selection
+      - Product selection with batch creation
+      - Qty, Purchase Price, GST, MRP, Selling Price
+      - Payment details
+  ✅ Purchase detail view (/dashboard/purchases/[id])
+  ✅ Edit purchase (/dashboard/purchases/[id]/edit)
+  ✅ Multiple payment support (add/edit/delete payments on a purchase)
+
+── CUSTOMERS (/dashboard/customers) ────────────────────────────────────────────
+
+  ✅ Customer list (search, add, edit, delete)
+  ✅ Customer fields: Name, Phone, Email, GSTIN, Address, City, State, Pincode
+  ✅ Inline Add Customer modal inside Create Invoice
+
+── SUPPLIERS (/dashboard/suppliers) ────────────────────────────────────────────
+
+  ✅ Supplier list (search, add, edit, delete)
+  ✅ Supplier fields: Name, Phone, Email, GSTIN, Address, City, State, Pincode
+  ✅ Supplier ledger view per supplier
+
+── PRODUCTS (/dashboard/products) ──────────────────────────────────────────────
+
+  ✅ Product list with batch-level rows
+  ✅ Add product + initial batch (name, HSN, GST rate, MRP, selling price,
+     purchase price, stock qty, unit, batch no, batch expiry)
+  ✅ Edit product (basic fields — stock managed via purchases/sales)
+  ✅ Delete batch (deletes product too if last batch)
+  ✅ Toggle batch active/inactive (On/Off slider)
+  ✅ Search by name or HSN code
+  ✅ Batch details shown (batch no, expiry, qty per batch)
+
+── SERVICES (/dashboard/services) ──────────────────────────────────────────────
+
+  ✅ Service list page (search, add, edit, delete)
+  ✅ Service fields: Name, Rate, Unit, SAC Code, GST Rate, Description
+  ✅ Add service modal (in-page)
+  ✅ Edit service — dedicated page (/dashboard/services/[id]/edit)
+  ✅ Delete service with confirmation
+  ✅ Units: PCS, NOS, JOB, HRS, DAYS, MONTHS
+  ✅ GST rates: 0%, 5%, 12%, 18%, 28%
+  ✅ servicesAPI wired in utils/api.js (getAll, getOne, create, update, delete)
+
+── INVENTORY (/dashboard/inventory) ────────────────────────────────────────────
+
+  ✅ Batch list (all batches across all products)
+  ✅ Edit batch details (MRP, selling price, expiry, qty)
+  ✅ Toggle batch active/inactive
+  ✅ Delete batch
+  ✅ Near-expiry alerts
+  ✅ Expired stock alerts
+  ✅ Low stock alerts
+  ✅ Inventory valuation summary
+
+── EXPENSES (/dashboard/expenses) ──────────────────────────────────────────────
+
+  ✅ Expense list (search, add, edit, delete)
+  ✅ Expense fields: Category, Amount, Date, Description, Payment Method
+  ✅ Stats (total expenses this month)
+
+── SALES RETURNS (/dashboard/sales-returns) ────────────────────────────────────
+
+  ✅ Sales return list (search, view)
+  ✅ Create sales return (linked to original invoice)
+  ✅ Return detail view
+  ✅ Update refund status
+
+── PURCHASE RETURNS (/dashboard/purchase-returns) ──────────────────────────────
+
+  ✅ Purchase return list
+  ✅ Create purchase return (linked to original purchase)
+  ✅ Return detail view
+
+── PAYMENT RECEIPTS (/dashboard/payment-receipts) ──────────────────────────────
+
+  ✅ Payment receipt list (search, filter by type/status)
+  ✅ Payment type badges (CASH, UPI, CARD, CHEQUE, BANK_TRANSFER, CREDIT_NOTE)
+  ✅ Status badges (PAID, PARTIAL, UNPAID)
+  ✅ Delete payment
+
+── QUOTATIONS (/dashboard/quotation) ───────────────────────────────────────────
+
+  ✅ Quotation list (search, status badges)
+  ✅ Status: DRAFT, SENT, ACCEPTED, REJECTED, EXPIRED
+  ✅ Delete quotation
+  ✅ Convert quotation to invoice (API ready)
+  ✅ QuotationTemplate for print/preview
+  ✅ quotationsAPI: getAll, getStats, getOne, create, update, delete, convertToInvoice
+
+── LEDGERS (/dashboard/ledgers) ────────────────────────────────────────────────
+
+  ✅ Cash Ledger tab — date filter, transactions list, opening/closing balance
+  ✅ Bank Ledger tab
+  ✅ Customer Ledger tab (select customer, view transactions)
+  ✅ Supplier Ledger tab (select supplier, view transactions)
+  ✅ Trial Balance tab
+  ✅ P&L Statement tab (Profit & Loss)
+  ✅ Balance Sheet tab
+  ✅ Export to Excel
+  ✅ Export to PDF
+  ✅ Shared components: LedgerFilters, LedgerSummaryCards, LedgerTable
+
+── GST REPORTS (/dashboard/reports) ────────────────────────────────────────────
+
+  ✅ GSTR-1 report (B2B, B2C, CDNR, CDNUR, HSN Summary, Advance Receipts)
+  ✅ GSTR-3B report
+  ✅ Tax Summary report
+  ✅ HSN Summary report
+  ✅ P&L report
+  ✅ Balance Sheet report
+  ✅ E-Way Bill (single invoice)
+  ✅ E-Way Bill (bulk)
+  ✅ Export to Excel (styled, multi-sheet via ExcelJS)
+  ✅ Export to JSON (GST portal compatible GSTR-1 format)
+  ✅ Date range filter
+  ✅ GSTR-1 state code mapping (all Indian states)
+
+── SETTINGS (/dashboard/settings) ──────────────────────────────────────────────
+
+  Shop Settings tab:
+  ✅ Shop name, owner name, phone, email
+  ✅ Address, city, state, pincode
+  ✅ GSTIN, PAN
+  ✅ Logo upload (base64, shown in sidebar + invoice templates)
+  ✅ Bank details (bank name, account no, IFSC, branch)
+
+  Invoice Settings tab:
+  ✅ Invoice number prefix
+  ✅ Invoice template selection (Modern / Tally Portrait / Tally Landscape)
+  ✅ QR code upload for payment
+  ✅ Toggle: Show logo on invoice
+  ✅ Toggle: Show bank details on invoice
+  ✅ Toggle: Show QR code on invoice
+  ✅ Toggle: Show signature field
+
+  Proforma Invoice Settings tab:
+  ✅ Proforma prefix, template, toggles (similar to invoice settings)
+
+  Quotation Settings tab:
+  ✅ Quotation prefix, validity days, template settings
+
+  Business Type tab:
+  ✅ 16 business types to choose from
+     (Manufacturing, Retail, Wholesale, Pharma, Garments, Electronics,
+      Grocery, Jewellery, Transport, Hardware, Services, IT, Education,
+      Healthcare, Real Estate, Others)
+
+── ADMIN PANEL (/admin) ─────────────────────────────────────────────────────────
+
+  ✅ Admin dashboard — list all organizations
+  ✅ View organization details
+  ✅ Create / edit organization
+  ✅ Organization page with subscription/plan info
+
+================================================================================
+  SECTION 2 — HALF-DONE / UI READY BUT BACKEND NOT CONNECTED  🔶
+================================================================================
+
+  🔶 Services on Invoice
+       - "Add Service" button exists on Create Invoice page
+       - Service name input works (free text)
+       - Backend: service selection dropdown not wired (no servicesAPI.getAll
+         call on invoice page yet)
+       - SAC code, GST rate, rate auto-fill from selected service pending
+       - Submit: service items sent to backend with itemType:'service' but
+         backend may not handle this field yet
+
+  🔶 Quotation — New & Edit pages
+       - /dashboard/quotation/new — folder exists, page.js is EMPTY
+       - /dashboard/quotation/[id] — folder exists, page.js is EMPTY
+       - Only the list page is complete
+
+  🔶 Services — [id] route (detail view)
+       - /dashboard/services/[id] — no page.js (only edit sub-folder exists)
+       - Edit page is complete but there is no detail/view page
+
+  🔶 Bill of Supply
+       - Toggle exists on Create Invoice page
+       - GST fields disable correctly
+       - Backend field `invoiceType` sent in payload
+       - Invoice template may not yet differentiate "Bill of Supply" visually
+
+  🔶 Proforma Invoice
+       - Nav link exists (/dashboard/proforma-invoices)
+       - Settings tab is complete (prefix, template, toggles)
+       - The actual Proforma Invoice list/create/view pages DO NOT EXIST
+
+  🔶 Delivery Challans
+       - Nav link exists (/dashboard/delivery-challans)
+       - NO pages built at all
+
+  🔶 Invoice — Service Items on submit
+       - addServiceItem adds { itemType:'service', serviceName, ... }
+       - handleSubmit still validates using product/batch fields
+       - Need to skip product/batch validation for service-type items
+
+================================================================================
+  SECTION 3 — NEW FEATURES TO BE BUILT  🔴
+================================================================================
+
+── HIGH PRIORITY ────────────────────────────────────────────────────────────────
+
+  🔴 Quotation — Create New (/dashboard/quotation/new)
+       - Form similar to New Invoice
+       - Customer selection, items (products + services), validity date
+       - Status defaults to DRAFT
+       - "Send to Customer" action → status → SENT
+
+  🔴 Quotation — Detail View (/dashboard/quotation/[id])
+       - Show quotation details
+       - "Convert to Invoice" button (API exists: quotationsAPI.convertToInvoice)
+       - Download / Print quotation PDF
+       - WhatsApp share
+
+  🔴 Proforma Invoice — Full Module
+       - List page (/dashboard/proforma-invoices)
+       - Create page (/dashboard/proforma-invoices/new)
+       - Detail/View page (/dashboard/proforma-invoices/[id])
+       - PeoformaSettingsTab is already done (settings ready)
+       - Proforma template component needed for print
+
+  🔴 Delivery Challans — Full Module
+       - List page (/dashboard/delivery-challans)
+       - Create page (select customer, items, qty)
+       - Detail/View + print
+
+  🔴 Services on Invoice — Full Wiring
+       - Load services list on invoice create/edit page
+       - Searchable service dropdown (like product batch dropdown)
+       - Auto-fill: rate, GST rate, SAC code from selected service
+       - Backend validation to accept service-type line items
+       - Invoice templates to render services differently (SAC code vs HSN)
+
+  🔴 Invoice Edit — Services Support
+       - /dashboard/invoices/[id]/edit — currently only handles products
+       - Need to load and render service-type items on edit
+
+── MEDIUM PRIORITY ──────────────────────────────────────────────────────────────
+
+  🔴 Recurring Invoices
+       - Schedule invoices to auto-generate (weekly, monthly)
+
+  🔴 Email / SMS Invoice
+       - Send invoice PDF directly via email or SMS to customer
+
+  🔴 Customer Statement
+       - Per-customer: all invoices, payments, outstanding balance
+       - Printable / downloadable statement
+
+  🔴 Supplier Statement
+       - Per-supplier: all purchases, payments, outstanding balance
+
+  🔴 Multi-Currency Support
+       - For export businesses (USD, EUR, etc.)
+
+  🔴 Barcode / HSN Scanner (Inventory)
+       - Scan product barcode to auto-select in invoice
+
+  🔴 Stock Alerts — Notifications Panel
+       - In-app notification badge for low stock / near expiry
+
+  🔴 Purchase Order (PO)
+       - Create PO before a purchase
+       - Convert PO to Purchase on receipt of goods
+
+  🔴 Credit Note
+       - Formal credit note document for sales returns (CDNR)
+       - Separate from sales return — printable credited note
+
+  🔴 Debit Note
+       - Formal debit note for purchase returns
+
+  🔴 Dashboard — More Analytics
+       - Revenue chart (monthly bar/line graph)
+       - Top 5 customers by revenue
+       - Top 5 products by sales
+       - GST payable this month
+
+── LOW PRIORITY / FUTURE ────────────────────────────────────────────────────────
+
+  🔴 Multi-branch / Multi-location support
+  🔴 Mobile app (React Native)
+  🔴 Tally export (.xml / .csv for Tally import)
+  🔴 CA (Chartered Accountant) portal access
+  🔴 Subscription / plan management in admin panel
+  🔴 Audit log (track who changed what and when)
+  🔴 Two-factor authentication (2FA)
+  🔴 Dark mode
+
+================================================================================
+  SECTION 4 — KNOWN ISSUES / BUGS TO FIX  ⚠️
+================================================================================
+
+  ⚠️  Filename typos in settings components:
+       - PeoformaSettingsTab.js  (should be ProformaSettingsTab.js)
+       - QuoatationSettingsTab.js  (should be QuotationSettingsTab.js)
+       (Imports in settings/page.js match so no crash — cosmetic only)
+
+  ⚠️  Invoice submit validation does not skip product checks for service items
+       - Service items have no product/batch — validation will wrongly block
+
+  ⚠️  Invoice templates (all 3) render only product items
+       - Service items (SAC code, no HSN) not handled in print layout
+
+  ⚠️  reports/page.js is 2059 lines — should be broken into sub-components
+       - Each report type (GSTR1, GSTR3B, etc.) should be its own component
+
+  ⚠️  invoices/new/page.js is ~1000 lines — consider extracting:
+       - ItemsTable component
+       - CustomerSelector component
+       - TotalsPanel component
+
+================================================================================
+  SECTION 5 — API NAMESPACES (utils/api.js)
+================================================================================
+
+  authAPI         → login, signup
+  shopAPI         → get, update
+  productsAPI     → getAll, getAllWithBatches, getBatchesForInvoice,
+                    getForPurchase, getOne, create, update, delete
+  customersAPI    → getAll, getOne, create, update, delete
+  invoicesAPI     → getAll, getStats, getOne, create, update, updatePayment,
+                    delete, addPayment, editPayment, deletePayment
+  suppliersAPI    → getAll, getStats, getOne, getLedger, create, update, delete
+  purchasesAPI    → getAll, getStats, getOne, create, update, updatePayment,
+                    delete, addPayment, editPayment, deletePayment
+  purchaseReturnsAPI → getAll, getStats, getOne, create
+  salesReturnsAPI → getAll, getStats, getOne, create, updateRefund
+  expensesAPI     → getAll, getStats, getOne, create, update, delete
+  paymentsAPI     → getAll, getStats, getOne, create
+  inventoryAPI    → getAllBatches, getBatchesByProduct, getBatch, updateBatch,
+                    toggleBatchActive, deleteBatch, getNearExpiry, getExpired,
+                    getLowStock, getStats, getValuation
+  reportsAPI      → getGSTR1, downloadGSTR1, getGSTR3B, getTaxSummary,
+                    getHSNSummary, getProfitLoss, getBalanceSheet,
+                    getEWayBill, getEWayBillBulk, getLedger, getTrialBalance,
+                    getSummary, getCreditNotes
+  quotationsAPI   → getAll, getStats, getOne, create, update, delete,
+                    convertToInvoice
+  servicesAPI     → getAll, getOne, create, update, delete
+
+================================================================================
+  END OF DOCUMENT
+================================================================================
