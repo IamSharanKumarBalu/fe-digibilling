@@ -109,7 +109,6 @@ export default function Services() {
     };
 
     const openAddModal = () => {
-        setEditingService(null);
         setFormData(EMPTY_FORM);
         setErrors({});
         setShowModal(true);
@@ -117,7 +116,6 @@ export default function Services() {
 
     const closeModal = () => {
         setShowModal(false);
-        setEditingService(null);
         setFormData(EMPTY_FORM);
         setErrors({});
     };

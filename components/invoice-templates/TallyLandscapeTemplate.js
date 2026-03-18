@@ -392,6 +392,23 @@ export default function TallyLandscapeTemplate({ invoice, shopSettings }) {
                     </table>
                 )}
 
+                {/* ── Transport / Dispatch Details ─────────────── */}
+                {(invoice.transportMode || invoice.transporterName || invoice.vehicleNumber ||
+                  invoice.approxDist || invoice.pos || invoice.supplyDate || invoice.transporterId ||
+                  invoice.eWayBillNumber) && (
+                    <div style={{ border: B, borderTop: 'none', padding: '4px 6px', fontSize: '10px', marginBottom: '4px' }}>
+                        <span style={{ fontWeight: 'bold' }}>Transport Details: </span>
+                        {invoice.eWayBillNumber && <span style={{ marginRight: '12px' }}>E-Way Bill No.: <strong>{invoice.eWayBillNumber}</strong></span>}
+                        {invoice.transportMode && <span style={{ marginRight: '12px' }}>Mode: {invoice.transportMode}</span>}
+                        {invoice.transporterName && <span style={{ marginRight: '12px' }}>Transporter: {invoice.transporterName}</span>}
+                        {invoice.transporterId && <span style={{ marginRight: '12px' }}>Transporter ID: {invoice.transporterId}</span>}
+                        {invoice.vehicleNumber && <span style={{ marginRight: '12px' }}>Vehicle No.: {invoice.vehicleNumber}</span>}
+                        {invoice.approxDist && <span style={{ marginRight: '12px' }}>Distance: {invoice.approxDist} km</span>}
+                        {invoice.pos && <span style={{ marginRight: '12px' }}>Place of Supply: {invoice.pos}</span>}
+                        {invoice.supplyDate && <span>Supply Date: {new Date(invoice.supplyDate).toLocaleDateString('en-IN')}</span>}
+                    </div>
+                )}
+
                 {/* ── Terms & Conditions ─────────────────────── */}
                 {hasTerms && (
                     <div style={{ border: B, padding: '3px 5px', marginBottom: '4px', fontSize: '9px' }}>

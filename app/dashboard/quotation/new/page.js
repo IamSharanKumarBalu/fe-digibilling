@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import DashboardLayout from '@/components/DashboardLayout';
 import Modal from '@/components/Modal';
-import { productsAPI, customersAPI, quotationsAPI, shopAPI } from '@/utils/api';
+import { productsAPI, customersAPI, quotationsAPI, shopAPI, servicesAPI } from '@/utils/api';
 import {
   HiPlus, HiSearch, HiX, HiExclamation,
   HiCube, HiLightningBolt, HiChevronDown, HiChevronUp,
@@ -20,6 +20,7 @@ export default function NewQuotation() {
 
   // ── Data ───────────────────────────────────────────────────────────────
   const [products, setProducts] = useState([]);
+  const [services, setServices] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [shopSettings, setShopSettings] = useState(null);
 
@@ -85,14 +86,16 @@ export default function NewQuotation() {
 
   const loadData = async () => {
     try {
-      const [batchesData, customersData, shopData] = await Promise.all([
+      const [batchesData, customersData, shopData, servicesData] = await Promise.all([
         productsAPI.getBatchesForInvoice(),
         customersAPI.getAll(),
         shopAPI.get(),
+        servicesAPI.getAll().catch(() => []),
       ]);
       setProducts(batchesData);
       setCustomers(customersData);
       setShopSettings(shopData);
+      setServices(servicesData);
       if (shopData?.defaultTaxType) setTaxType(shopData.defaultTaxType);
       if (shopData?.quotationTerms) setTerms(shopData.quotationTerms);
       if (shopData?.quotationValidityDays) {
@@ -466,9 +469,49 @@ export default function NewQuotation() {
                       {/* Item selector */}
                       <div className="col-span-12 md:col-span-4">
                         {isService ? (
-                          <input type="text" placeholder="Service name…" value={item.serviceName || ''}
-                            onChange={e => { const u = [...items]; u[index].serviceName = e.target.value; setItems(u); }}
-                            className="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 focus:border-transparent" />
+                          (() => {
+                            const filtered = services.filter(s =>
+                              s.name.toLowerCase().includes((item.serviceName || '').toLowerCase())
+                            );
+                            const showDrop = item._svcDropOpen && filtered.length > 0;
+                            return (
+                              <div className="relative">
+                                <input type="text" placeholder="Type or pick a service…" value={item.serviceName || ''}
+                                  onFocus={() => { const u = [...items]; u[index]._svcDropOpen = true; setItems(u); }}
+                                  onBlur={() => setTimeout(() => { const u = [...items]; u[index]._svcDropOpen = false; setItems(u); }, 150)}
+                                  onChange={e => {
+                                    const u = [...items];
+                                    u[index].serviceName = e.target.value;
+                                    u[index]._svcDropOpen = true;
+                                    u[index].serviceId = '';
+                                    setItems(u);
+                                  }}
+                                  className="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 focus:border-transparent" />
+                                {showDrop && (
+                                  <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-purple-200 rounded-lg shadow-xl max-h-52 overflow-y-auto">
+                                    {filtered.map(s => (
+                                      <li key={s._id}
+                                        onMouseDown={() => {
+                                          const u = [...items];
+                                          u[index].serviceName = s.name;
+                                          u[index].serviceId = s._id;
+                                          u[index].sellingPrice = s.rate;
+                                          u[index].gstRate = s.gstRate;
+                                          u[index].sacCode = s.sacCode || '';
+                                          u[index].unit = s.unit || 'NOS';
+                                          u[index]._svcDropOpen = false;
+                                          setItems(u);
+                                        }}
+                                        className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-purple-50 text-sm">
+                                        <span className="font-medium text-gray-800">{s.name}</span>
+                                        <span className="text-xs text-gray-400 ml-2">₹{s.rate} · {s.gstRate}% GST</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            );
+                          })()
                         ) : (
                           <select value={item.selectedBatch || ''} onChange={e => updateItem(index, 'product', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent bg-white">

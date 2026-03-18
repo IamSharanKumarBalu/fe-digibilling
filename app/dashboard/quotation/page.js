@@ -10,6 +10,7 @@ import { quotationsAPI } from '@/utils/api';
 import Link from 'next/link';
 import {
   HiPlus, HiEye, HiPencil, HiTrash, HiSearch, HiChevronLeft, HiChevronRight,
+  HiDocumentText,
 } from 'react-icons/hi';
 
 const PAGE_SIZE = 10;
@@ -33,6 +34,10 @@ export default function QuotationsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  // ── Convert to Invoice state ──────────────────────────────────────────────
+  const [convertConfirm, setConvertConfirm] = useState(null); // holds the quotation object
+  const [converting, setConverting] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.push('/login');
@@ -78,6 +83,21 @@ export default function QuotationsPage() {
     }
   };
 
+  const handleConvertToInvoice = async () => {
+    setConverting(true);
+    try {
+      const invoice = await quotationsAPI.convertToInvoice(convertConfirm._id);
+      toast.success('Quotation converted to invoice!');
+      setConvertConfirm(null);
+      router.push(`/dashboard/invoices/${invoice._id}`);
+    } catch (error) {
+      toast.error(error.message || 'Failed to convert to invoice');
+      setConvertConfirm(null);
+    } finally {
+      setConverting(false);
+    }
+  };
+
   if (loading || !user) return null;
 
   return (
@@ -115,7 +135,7 @@ export default function QuotationsPage() {
         {/* Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {loadingData ? (
-            <div className="p-4"><TableSkeleton rows={8} columns={7} /></div>
+            <div className="p-4"><TableSkeleton rows={8} columns={8} /></div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -138,45 +158,72 @@ export default function QuotationsPage() {
                       </td>
                     </tr>
                   ) : (
-                    paginated.map((q) => (
-                      <tr key={q._id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">{q.quotationNumber}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {new Date(q.quotationDate).toLocaleDateString('en-IN')}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{q.customerName}</div>
-                          {q.customerPhone && <div className="text-xs text-gray-500">{q.customerPhone}</div>}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                          ₹{Number(q.grandTotal || 0).toLocaleString('en-IN')}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {q.validityDate ? new Date(q.validityDate).toLocaleDateString('en-IN') : '—'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_COLOR[q.status] || STATUS_COLOR.DRAFT}`}>
-                            {q.status || 'DRAFT'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => router.push(`/dashboard/quotation/${q._id}`)}
-                              className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="View">
-                              <HiEye className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => router.push(`/dashboard/quotation/${q._id}/edit`)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
-                              <HiPencil className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => setDeleteConfirm(q)}
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                              <HiTrash className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                    paginated.map((q) => {
+                      const alreadyConverted = !!q.convertedToInvoiceId;
+                      const canConvert = !alreadyConverted;
+
+                      return (
+                        <tr key={q._id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">{q.quotationNumber}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {new Date(q.quotationDate).toLocaleDateString('en-IN')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{q.customerName}</div>
+                            {q.customerPhone && <div className="text-xs text-gray-500">{q.customerPhone}</div>}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                            ₹{Number(q.grandTotal || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {q.validityDate ? new Date(q.validityDate).toLocaleDateString('en-IN') : '—'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_COLOR[q.status] || STATUS_COLOR.DRAFT}`}>
+                              {q.status || 'DRAFT'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className="flex items-center justify-end gap-1">
+
+                              {/* Convert to Invoice button */}
+                              {canConvert ? (
+                                <button
+                                  onClick={() => setConvertConfirm(q)}
+                                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors text-xs font-semibold"
+                                  title="Convert to Invoice"
+                                >
+                                  <HiDocumentText className="w-3.5 h-3.5" />
+                                  Invoice
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => router.push(`/dashboard/invoices/${q.convertedToInvoiceId}`)}
+                                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors text-xs font-semibold"
+                                  title="View converted invoice"
+                                >
+                                  <HiDocumentText className="w-3.5 h-3.5" />
+                                  View Invoice
+                                </button>
+                              )}
+
+                              <button onClick={() => router.push(`/dashboard/quotation/${q._id}`)}
+                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="View">
+                                <HiEye className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => router.push(`/dashboard/quotation/${q._id}/edit`)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+                                <HiPencil className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => setDeleteConfirm(q)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                                <HiTrash className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -215,6 +262,41 @@ export default function QuotationsPage() {
         </div>
       </div>
 
+      {/* ── Convert to Invoice Confirmation Modal ──────────────────────────── */}
+      {convertConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+              <HiDocumentText className="w-7 h-7 text-emerald-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Convert to Invoice?</h3>
+            <p className="text-sm text-gray-500 mb-1">
+              <span className="font-semibold text-gray-700">{convertConfirm.quotationNumber}</span> will be converted into a new invoice.
+            </p>
+            <p className="text-xs text-gray-400 mb-6">
+              Stock will be deducted and the quotation will be marked as Accepted.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConvertConfirm(null)}
+                disabled={converting}
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConvertToInvoice}
+                disabled={converting}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-60"
+              >
+                {converting ? 'Converting...' : 'Convert'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Confirmation Modal ──────────────────────────────────────── */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
