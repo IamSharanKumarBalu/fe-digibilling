@@ -500,7 +500,7 @@ export default function Invoices() {
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <div className="font-medium text-gray-900">{invoice.customerName}</div>
+                          <div className="font-medium text-gray-900 max-w-[200px] xl:max-w-[300px] whitespace-normal break-all">{invoice.customerName}</div>
                           {invoice.customerPhone && (
                             <div className="text-sm text-gray-500">{invoice.customerPhone}</div>
                           )}
@@ -574,68 +574,69 @@ export default function Invoices() {
           )}
         </div>
 
-        {/* Pagination */}
+        {/* Pagination - Matching inventory/products design */}
         {invoices.length > 0 && (
-          <div className="flex items-center justify-between bg-white px-6 py-4 rounded-xl shadow-sm border border-gray-200">
-            <div className="text-sm text-gray-600">
-              Page {page} of {pagination.totalPages || 1}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handlePageChange(page - 1)}
-                disabled={!pagination.hasPrevPage}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  pagination.hasPrevPage
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                <HiChevronLeft className="w-5 h-5" />
-              </button>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+              {/* Info text */}
+              <p className="text-sm text-gray-600">
+                {pagination.total === 0
+                  ? 'No entries found'
+                  : `Showing ${((page - 1) * limit) + 1}–${Math.min(page * limit, pagination.total || 0)} of ${pagination.total || 0} entries`}
+              </p>
 
-              {/* Page Numbers */}
+              {/* Page buttons */}
               {pagination.totalPages > 1 && (
-                <div className="flex gap-1">
-                  {[...Array(pagination.totalPages)].map((_, i) => {
-                    const pageNum = i + 1;
-                    // Show first page, last page, current page, and pages around current
-                    if (
-                      pageNum === 1 ||
-                      pageNum === pagination.totalPages ||
-                      (pageNum >= page - 2 && pageNum <= page + 2)
-                    ) {
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                            pageNum === page
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    } else if (pageNum === page - 3 || pageNum === page + 3) {
-                      return <span key={pageNum} className="px-2 py-2 text-gray-400">...</span>;
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handlePageChange(Math.max(1, page - 1))}
+                    disabled={!pagination.hasPrevPage}
+                    className="p-2 rounded-lg border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 text-gray-600 transition-colors"
+                  >
+                    <HiChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  {(() => {
+                    const totalPages = pagination.totalPages;
+                    const safePage = Math.min(page, totalPages);
+                    const delta = 2;
+                    const pageNumbers = [];
+
+                    for (let i = 1; i <= totalPages; i++) {
+                      if (i === 1 || i === totalPages || (i >= safePage - delta && i <= safePage + delta)) {
+                        pageNumbers.push(i);
+                      } else if (pageNumbers[pageNumbers.length - 1] !== '...') {
+                        pageNumbers.push('...');
+                      }
                     }
-                    return null;
-                  })}
+
+                    return pageNumbers.map((p, idx) =>
+                      p === '...'
+                        ? <span key={`el-${idx}`} className="px-2 text-gray-400 select-none">…</span>
+                        : (
+                          <button
+                            key={p}
+                            onClick={() => handlePageChange(p)}
+                            className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors border ${safePage === p
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                              }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                    );
+                  })()}
+
+                  <button
+                    onClick={() => handlePageChange(Math.min(pagination.totalPages, page + 1))}
+                    disabled={!pagination.hasNextPage}
+                    className="p-2 rounded-lg border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 text-gray-600 transition-colors"
+                  >
+                    <HiChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
               )}
-
-              <button
-                onClick={() => handlePageChange(page + 1)}
-                disabled={!pagination.hasNextPage}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  pagination.hasNextPage
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                <HiChevronRight className="w-5 h-5" />
-              </button>
             </div>
           </div>
         )}

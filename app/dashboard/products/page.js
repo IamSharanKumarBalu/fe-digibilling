@@ -16,7 +16,12 @@ import {
   HiCube,
   HiExclamation,
   HiCheckCircle,
-  HiXCircle
+  HiXCircle,
+  HiFilter,
+  HiChevronLeft,
+  HiChevronRight,
+  HiChevronDown,
+  HiChevronUp
 } from 'react-icons/hi';
 
 export default function Products() {
@@ -27,9 +32,26 @@ export default function Products() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [errors, setErrors] = useState({});
   const [serialInput, setSerialInput] = useState(''); // Temp input for adding serial numbers
+
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(15);
+  const [pagination, setPagination] = useState({});
+
+  // Search and filter state
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    itemStatus: '',
+    category: ''
+  });
+
+  // Sorting state
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [formData, setFormData] = useState({
     name: '',
     itemStatus: 'TRADING',
@@ -56,19 +78,79 @@ export default function Products() {
     }
   }, [user, loading, router]);
 
+  useEffect(() => {
+    if (user) {
+      loadProducts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit, search, filters.itemStatus, filters.category, sortBy, sortOrder]);
+
   const loadProducts = async () => {
+    setLoadingProducts(true);
     try {
-      const params = {};
-      if (searchTerm && searchTerm.trim() !== '') {
-        params.search = searchTerm;
-      }
+      const params = {
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+        ...(search && { search }),
+        ...Object.fromEntries(
+          Object.entries(filters).filter(([_, v]) => v !== '')
+        )
+      };
+
       const data = await productsAPI.getAllWithBatches(params);
-      setProducts(data);
+      setProducts(data.products || data); // Handle both old and new response format
+      setPagination(data.pagination || {});
     } catch (error) {
       console.error('Error loading products:', error);
+      toast.error('Failed to load products');
     } finally {
       setLoadingProducts(false);
     }
+  };
+
+  const handleSearch = (e) => {
+    e?.preventDefault();
+    setSearch(searchInput);
+    setPage(1);
+  };
+
+  const handleSearchKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      itemStatus: '',
+      category: ''
+    });
+    setSearch('');
+    setSearchInput('');
+    setPage(1);
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const SortIcon = ({ field }) => {
+    if (sortBy !== field) return <HiChevronDown className="w-4 h-4 text-gray-400" />;
+    return sortOrder === 'asc' ?
+      <HiChevronUp className="w-4 h-4 text-emerald-600" /> :
+      <HiChevronDown className="w-4 h-4 text-emerald-600" />;
   };
 
   const validateForm = () => {
@@ -252,22 +334,127 @@ export default function Products() {
           </button>
         </div>
 
-        {/* Main Content */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          {/* Search */}
-          <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-gray-50 to-white">
-            <div className="relative">
-              <HiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        {/* Search and Filters */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+          {/* Search Bar */}
+          <div className="flex gap-4">
+            <div className="flex-1 relative">
+              <HiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search products by name or HSN code..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyUp={() => loadProducts()}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-black"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
+                className="w-full text-gray-800 pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
+            <button
+              onClick={handleSearch}
+              className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all flex items-center gap-2"
+            >
+              <HiSearch className="w-5 h-5" />
+              Search
+            </button>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all flex items-center gap-2 ${
+                showFilters
+                  ? 'bg-gray-700 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <HiFilter className="w-5 h-5" />
+              Filters
+              {Object.values(filters).some(v => v !== '') && (
+                <span className="ml-1 px-2 py-0.5 bg-white text-emerald-600 rounded-full text-xs">
+                  {Object.values(filters).filter(v => v !== '').length}
+                </span>
+              )}
+            </button>
           </div>
+
+          {/* Filter Panel */}
+          {showFilters && (
+            <div className="pt-4 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Item Status */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Item Status</label>
+                  <select
+                    value={filters.itemStatus}
+                    onChange={(e) => {
+                      setFilters({ ...filters, itemStatus: e.target.value });
+                      setPage(1);
+                    }}
+                    className="w-full text-gray-800 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="">All Status</option>
+                    <option value="TRADING">Trading Item</option>
+                    <option value="RAW_MATERIAL">Raw Material</option>
+                    <option value="FINISHED">Finished Good</option>
+                    <option value="SEMI">Semi-Finished</option>
+                    <option value="CONSUMABLE">Consumable</option>
+                  </select>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                  <input
+                    type="text"
+                    value={filters.category}
+                    onChange={(e) => {
+                      setFilters({ ...filters, category: e.target.value });
+                      setPage(1);
+                    }}
+                    placeholder="Filter by category..."
+                    className="w-full text-gray-800 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* Clear Filters Button */}
+              {(search || Object.values(filters).some(v => v !== '')) && (
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={handleClearFilters}
+                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 font-medium"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Results Summary and Page Size */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            Showing {products.length > 0 ? ((page - 1) * limit + 1) : 0} to {Math.min(page * limit, pagination.total || 0)} of {pagination.total || 0} products
+          </p>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">Show:</label>
+            <select
+              value={limit}
+              onChange={(e) => {
+                setLimit(parseInt(e.target.value));
+                setPage(1);
+              }}
+              className="px-3 py-2 text-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="10">10</option>
+              <option value="15">15</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
 
           {/* Table */}
           {loadingProducts ? (
@@ -279,11 +466,23 @@ export default function Products() {
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Product
+                    <th
+                      className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                      onClick={() => handleSort('name')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Product
+                        <SortIcon field="name" />
+                      </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Item Status
+                    <th
+                      className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                      onClick={() => handleSort('itemStatus')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Item Status
+                        <SortIcon field="itemStatus" />
+                      </div>
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Batch/Expiry
@@ -297,8 +496,14 @@ export default function Products() {
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Selling Price
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      GST
+                    <th
+                      className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                      onClick={() => handleSort('gstRate')}
+                    >
+                      <div className="flex items-center gap-2">
+                        GST
+                        <SortIcon field="gstRate" />
+                      </div>
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Actions
@@ -331,7 +536,7 @@ export default function Products() {
                             >
                               <td className="px-6 py-4">
                                 <div>
-                                  <div className={`text-sm font-semibold ${isInactive ? 'text-gray-400' : 'text-gray-900'}`}>
+                                  <div className={`text-sm font-semibold max-w-[200px] md:max-w-xs xl:max-w-sm whitespace-normal break-all ${isInactive ? 'text-gray-400' : 'text-gray-900'}`}>
                                     {product.name}
                                   </div>
                                   <div className="flex items-center gap-2 mt-1">
@@ -369,7 +574,7 @@ export default function Products() {
                               </td>
                               <td className={`px-6 py-4 text-sm ${isInactive ? 'text-gray-400' : 'text-gray-900'}`}>
                                 <div className="space-y-1">
-                                  <div className="font-medium">{batch.batchNo || 'N/A'}</div>
+                                  <div className="font-medium max-w-[150px] whitespace-normal break-all">{batch.batchNo || 'N/A'}</div>
                                   {batch.expiryDate && (
                                     <div className={`text-xs ${isInactive ? 'text-gray-400' : 'text-gray-500'}`}>
                                       Exp: {new Date(batch.expiryDate).toLocaleDateString('en-IN')}
@@ -451,7 +656,7 @@ export default function Products() {
                           <tr key={product._id} className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-colors">
                             <td className="px-6 py-4">
                               <div>
-                                <div className="text-sm font-semibold text-gray-900">{product.name}</div>
+                                <div className="text-sm font-semibold text-gray-900 max-w-[200px] md:max-w-xs xl:max-w-sm whitespace-normal break-all">{product.name}</div>
                               </div>
                             </td>
                             <td className="px-6 py-4">
@@ -472,24 +677,26 @@ export default function Products() {
                                 );
                               })()}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500" colSpan="4">
+                            <td className="px-6 py-4 text-sm text-gray-500" colSpan="5">
                               No stock available
                             </td>
-                            <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
-                              <button
-                                onClick={() => handleEdit(product)}
-                                className="inline-flex items-center px-3 py-1.5 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all"
-                              >
-                                <HiPencil className="w-4 h-4 mr-1" />
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteProduct(product._id, product.name)}
-                                className="inline-flex items-center px-3 py-1.5 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
-                              >
-                                <HiTrash className="w-4 h-4 mr-1" />
-                                Delete
-                              </button>
+                            <td className="px-6 py-4 text-right text-sm font-medium">
+                              <div className="flex items-center justify-end gap-3">
+                                <button
+                                  onClick={() => handleEdit(product)}
+                                  className="inline-flex items-center px-3 py-1.5 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all"
+                                >
+                                  <HiPencil className="w-4 h-4 mr-1" />
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteProduct(product._id, product.name)}
+                                  className="inline-flex items-center px-3 py-1.5 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
+                                >
+                                  <HiTrash className="w-4 h-4 mr-1" />
+                                  Delete
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -500,6 +707,72 @@ export default function Products() {
               </table>
             </div>
           )}
+
+          {/* Pagination Footer - Same design as inventory page */}
+          {products.length > 0 && (
+            <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+              {/* Info text */}
+              <p className="text-sm text-gray-600">
+                {pagination.total === 0
+                  ? 'No entries found'
+                  : `Showing ${((page - 1) * limit) + 1}–${Math.min(page * limit, pagination.total || 0)} of ${pagination.total || 0} entries`}
+              </p>
+
+              {/* Page buttons */}
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handlePageChange(Math.max(1, page - 1))}
+                    disabled={!pagination.hasPrevPage}
+                    className="p-2 rounded-lg border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 text-gray-600 transition-colors"
+                  >
+                    <HiChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  {(() => {
+                    const totalPages = pagination.totalPages;
+                    const safePage = Math.min(page, totalPages);
+                    const delta = 2;
+                    const pageNumbers = [];
+
+                    for (let i = 1; i <= totalPages; i++) {
+                      if (i === 1 || i === totalPages || (i >= safePage - delta && i <= safePage + delta)) {
+                        pageNumbers.push(i);
+                      } else if (pageNumbers[pageNumbers.length - 1] !== '...') {
+                        pageNumbers.push('...');
+                      }
+                    }
+
+                    return pageNumbers.map((p, idx) =>
+                      p === '...'
+                        ? <span key={`el-${idx}`} className="px-2 text-gray-400 select-none">…</span>
+                        : (
+                          <button
+                            key={p}
+                            onClick={() => handlePageChange(p)}
+                            className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors border ${safePage === p
+                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                              }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                    );
+                  })()}
+
+                  <button
+                    onClick={() => handlePageChange(Math.min(pagination.totalPages, page + 1))}
+                    disabled={!pagination.hasNextPage}
+                    className="p-2 rounded-lg border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 text-gray-600 transition-colors"
+                  >
+                    <HiChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </div>
 
