@@ -179,11 +179,13 @@ export default function TallyPortraitTemplate({ invoice, shopSettings }) {
                                 <td style={{ border: B, padding: '3px 2px', textAlign: 'center', fontSize: '10px' }}>{index + 1}</td>
                                 <td style={{ border: B, padding: '3px 2px', fontSize: '10px' }}>
                                     <div style={{ fontWeight: 'bold' }}>{item.productName}</div>
-                                    {(item.batchNo || item.expiryDate) && (
+                                    {(item.batchNo || item.expiryDate || item.serialNumber) && (
                                         <div style={{ fontSize: '9px', color: '#555' }}>
                                             {item.batchNo && `Batch: ${item.batchNo}`}
                                             {item.batchNo && item.expiryDate && ' | '}
                                             {item.expiryDate && `Exp: ${new Date(item.expiryDate).toLocaleDateString('en-GB', { month: '2-digit', year: 'numeric' })}`}
+                                            {(item.batchNo || item.expiryDate) && item.serialNumber && ' | '}
+                                            {item.serialNumber && `S/N: ${item.serialNumber}`}
                                         </div>
                                     )}
                                 </td>

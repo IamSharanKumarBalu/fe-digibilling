@@ -8,15 +8,15 @@ import { HiCog, HiOfficeBuilding, HiDocument, HiCollection } from 'react-icons/h
 
 import ShopSettingsTab from '@/components/settings/ShopSettingsTab';
 import InvoiceSettingsTab from '@/components/settings/InvoiceSettingsTab';
-import ProformaSettingsTab from '@/components/settings/PeoformaSettingsTab';
-import QuotationSettingsTab from '@/components/settings/QuoatationSettingsTab';
+// import ProformaSettingsTab from '@/components/settings/PeoformaSettingsTab';
+// import QuotationSettingsTab from '@/components/settings/QuoatationSettingsTab';
 import BusinessTypeTab from '@/components/settings/BusinessTypeTab';
 
 const TABS = [
   { id: 'shop', label: 'Shop Settings', icon: HiOfficeBuilding },
   { id: 'invoice', label: 'Invoice Settings', icon: HiDocument },
-  { id: 'proforma', label: 'Proforma Invoice', icon: HiDocument },
-  { id: 'quotation', label: 'Quotation', icon: HiCollection },
+  // { id: 'proforma', label: 'Proforma Invoice', icon: HiDocument },
+  // { id: 'quotation', label: 'Quotation', icon: HiCollection },
   { id: 'business', label: 'Business Type', icon: HiCog },
 ];
 
@@ -68,8 +68,8 @@ export default function Settings() {
         {/* Tab Content */}
         {activeTab === 'shop' && <ShopSettingsTab />}
         {activeTab === 'invoice' && <InvoiceSettingsTab />}
-        {activeTab === 'proforma' && <ProformaSettingsTab />}
-        {activeTab === 'quotation' && <QuotationSettingsTab />}
+        {/* {activeTab === 'proforma' && <ProformaSettingsTab />} */}
+        {/* {activeTab === 'quotation' && <QuotationSettingsTab />} */}
         {activeTab === 'business' && <BusinessTypeTab />}
 
       </div>

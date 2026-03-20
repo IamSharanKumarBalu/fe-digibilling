@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { HiDocument, HiCollection, HiCurrencyRupee, HiUpload, HiSave, HiTruck, HiClipboardList, HiInformationCircle, HiLocationMarker } from 'react-icons/hi';
+import { HiDocument, HiCollection, HiCurrencyRupee, HiUpload, HiSave, HiTruck, HiClipboardList, HiInformationCircle, HiLocationMarker, HiHashtag, HiCalendar } from 'react-icons/hi';
 import { shopAPI } from '@/utils/api';
 import { useToast } from '@/context/ToastContext';
 
@@ -12,6 +12,8 @@ export default function InvoiceSettingsTab() {
         ewayBill: false,
         einvoice: false,
         billOfSupplyEnabled: false,
+        batchNumber: false,
+        expiryDate: false,
         enableTransport: false,
         enablePurchaseOrders: false,
         enableAdditionalDetails: false,
@@ -36,6 +38,8 @@ export default function InvoiceSettingsTab() {
                     ewayBill: data.ewayBill ?? false,
                     einvoice: data.einvoice ?? false,
                     billOfSupplyEnabled: data.billOfSupplyEnabled ?? false,
+                    batchNumber: data.invBatchNumber ?? false,
+                    expiryDate: data.invExpiryDate ?? false,
                     enableTransport: data.enableTransport ?? false,
                     enablePurchaseOrders: data.enablePurchaseOrders ?? false,
                     enableAdditionalDetails: data.enableAdditionalDetails ?? false,
@@ -61,6 +65,8 @@ export default function InvoiceSettingsTab() {
                 ewayBill: settings.ewayBill,
                 einvoice: settings.einvoice,
                 billOfSupplyEnabled: settings.billOfSupplyEnabled,
+                invBatchNumber: settings.batchNumber,
+                invExpiryDate: settings.expiryDate,
                 enableTransport: settings.enableTransport,
                 enablePurchaseOrders: settings.enablePurchaseOrders,
                 enableAdditionalDetails: settings.enableAdditionalDetails,
@@ -214,6 +220,18 @@ export default function InvoiceSettingsTab() {
     ];
 
     const ITEM_FIELDS = [
+        {
+            key: 'batchNumber',
+            label: 'Batch Number',
+            desc: 'Track batch numbers on each line item',
+            icon: <HiHashtag className="w-5 h-5 text-blue-500" />,
+        },
+        {
+            key: 'expiryDate',
+            label: 'Expiry Date',
+            desc: 'Track expiry dates on each line item',
+            icon: <HiCalendar className="w-5 h-5 text-red-400" />,
+        },
         {
             key: 'enableTransport',
             label: 'Transport Details',

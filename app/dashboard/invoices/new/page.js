@@ -214,7 +214,7 @@ export default function NewInvoice() {
   const updateItem = (index, field, value) => {
     const updated = [...invoiceItems];
 
-    // Auto-fill batch details when batch is selected
+    // Auto-fill batch/serial details when product is selected
     if (field === 'product' && value) {
       try {
         const batch = JSON.parse(value);
@@ -225,6 +225,18 @@ export default function NewInvoice() {
         updated[index].gstRate = batch.gstRate;
         updated[index].mrp = batch.mrp;
         updated[index].availableQuantity = batch.availableQuantity; // For validation
+
+        // Handle serial numbers
+        if (batch.hasSerial && batch.availableSerials) {
+          updated[index].availableSerials = batch.availableSerials; // Store available serials array
+          updated[index].serialNumber = null; // Will be set when user selects from dropdown
+          updated[index].quantity = 1; // Auto-set quantity to 1 for serial items
+          updated[index].hasSerial = true;
+        } else {
+          updated[index].availableSerials = null;
+          updated[index].serialNumber = null;
+          updated[index].hasSerial = false;
+        }
       } catch (e) {
         // If value is not JSON (backward compatibility), just set the value
         updated[index][field] = value;
@@ -768,18 +780,60 @@ export default function NewInvoice() {
                           })()
                         ) : (
                           /* Product: batch dropdown */
-                          <select
-                            value={item.selectedBatch || ''}
-                            onChange={(e) => updateItem(index, 'product', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          >
-                            <option value="">Select Product</option>
-                            {products.map((batch) => (
-                              <option key={batch.batchId} value={JSON.stringify(batch)}>
-                                {batch.label}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="w-full">
+                            <select
+                              value={item.selectedBatch || ''}
+                              onChange={(e) => updateItem(index, 'product', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="">Select Product</option>
+                              {products.map((batch) => (
+                                <option key={batch.batchId || batch.productId} value={JSON.stringify(batch)}>
+                                  {batch.label}
+                                </option>
+                              ))}
+                            </select>
+                            {/* Display serial number dropdown or batch info below product name */}
+                            {item.hasSerial && item.availableSerials ? (
+                              // Show serial number dropdown for products with serials
+                              <div className="mt-2">
+                                <select
+                                  value={item.serialNumber || ''}
+                                  onChange={(e) => updateItem(index, 'serialNumber', e.target.value)}
+                                  className="w-full px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm bg-green-50"
+                                >
+                                  <option value="">Select Serial Number</option>
+                                  {item.availableSerials.map((serial) => (
+                                    <option key={serial} value={serial}>
+                                      {serial}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            ) : item.selectedBatch && (() => {
+                              // Show batch info for regular batch products
+                              try {
+                                const batch = JSON.parse(item.selectedBatch);
+                                return batch.batchNo ? (
+                                  <div className="mt-1.5 px-2 py-1 bg-blue-50 border border-blue-200 rounded-md">
+                                    <span className="text-xs font-medium text-blue-700">
+                                      Batch: {batch.batchNo}
+                                      {batch.expiryDate && (
+                                        <span className="ml-2 text-blue-600">
+                                          • Exp: {new Date(batch.expiryDate).toLocaleDateString('en-GB')}
+                                        </span>
+                                      )}
+                                      <span className="ml-2 text-blue-600">
+                                        • Available: {batch.availableQuantity} {batch.unit}
+                                      </span>
+                                    </span>
+                                  </div>
+                                ) : null;
+                              } catch (e) {
+                                return null;
+                              }
+                            })()}
+                          </div>
                         )}
                       </div>
 
@@ -790,7 +844,8 @@ export default function NewInvoice() {
                           placeholder="Qty"
                           value={item.quantity}
                           onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          disabled={item.hasSerial} // Lock quantity to 1 for serial items
+                          className={`w-full px-3 py-2 border rounded-lg text-sm ${item.hasSerial ? 'bg-gray-100 cursor-not-allowed' : 'border-gray-300'}`}
                         />
                       </div>
 

@@ -109,6 +109,10 @@ export default function Products() {
         const submitData = {
           ...formData,
           expiryDate: formData.batchExpiryDate || undefined,
+          mrp: formData.mrp && formData.mrp !== '' ? parseFloat(formData.mrp) : undefined,
+          sellingPrice: formData.sellingPrice && formData.sellingPrice !== '' ? parseFloat(formData.sellingPrice) : undefined,
+          purchasePrice: formData.purchasePrice && formData.purchasePrice !== '' ? parseFloat(formData.purchasePrice) : undefined,
+          stockQuantity: formData.stockQuantity && formData.stockQuantity !== '' ? parseFloat(formData.stockQuantity) : undefined,
         };
         delete submitData.batchExpiryDate;
         await productsAPI.update(editingProduct._id, submitData);
@@ -117,6 +121,10 @@ export default function Products() {
         const submitData = {
           ...formData,
           expiryDate: formData.batchExpiryDate || undefined,
+          mrp: formData.mrp && formData.mrp !== '' ? parseFloat(formData.mrp) : undefined,
+          sellingPrice: formData.sellingPrice && formData.sellingPrice !== '' ? parseFloat(formData.sellingPrice) : undefined,
+          purchasePrice: formData.purchasePrice && formData.purchasePrice !== '' ? parseFloat(formData.purchasePrice) : undefined,
+          stockQuantity: formData.stockQuantity && formData.stockQuantity !== '' ? parseFloat(formData.stockQuantity) : undefined,
         };
         delete submitData.batchExpiryDate;
         await productsAPI.create(submitData);
@@ -132,7 +140,7 @@ export default function Products() {
 
   const handleEdit = (product) => {
     setEditingProduct(product);
-    setFormData({
+    const newFormData = {
       name: product.name,
       itemStatus: product.itemStatus || 'TRADING',
       category: product.category || '',
@@ -148,7 +156,8 @@ export default function Products() {
       trackInventory: product.trackInventory !== false, // default true
       batchNo: product.batches?.[0]?.batchNo || '',
       batchExpiryDate: product.batches?.[0]?.expiryDate ? product.batches[0].expiryDate.split('T')[0] : '',
-    });
+    };
+    setFormData(newFormData);
     setSerialInput('');
     setShowModal(true);
   };
@@ -445,9 +454,6 @@ export default function Products() {
                                 <div className="text-sm font-semibold text-gray-900">{product.name}</div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500" colSpan="5">
-                              No stock available
-                            </td>
                             <td className="px-6 py-4">
                               {(() => {
                                 const s = product.itemStatus || 'TRADING';
@@ -465,6 +471,9 @@ export default function Products() {
                                   </span>
                                 );
                               })()}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500" colSpan="4">
+                              No stock available
                             </td>
                             <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
                               <button
