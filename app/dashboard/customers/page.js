@@ -17,7 +17,9 @@ import {
   HiMail,
   HiPhone,
   HiLocationMarker,
-  HiExclamation
+  HiExclamation,
+  HiExclamationCircle,
+  HiCheckCircle
 } from 'react-icons/hi';
 
 export default function Customers() {
@@ -30,6 +32,11 @@ export default function Customers() {
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [errors, setErrors] = useState({});
+
+  // Delete modals
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCannotDelete, setShowCannotDelete] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -117,15 +124,33 @@ export default function Customers() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (confirm('Are you sure you want to delete this customer?')) {
-      try {
-        await customersAPI.delete(id);
-        loadCustomers();
-      } catch (error) {
-        toast.error(error.message || 'An error occurred');
-      }
+  const handleDeleteClick = (customer) => {
+    setCustomerToDelete(customer);
+
+    // Check if customer has outstanding balance
+    if (customer.outstandingBalance > 0) {
+      setShowCannotDelete(true);
+    } else {
+      setShowDeleteConfirm(true);
     }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await customersAPI.delete(customerToDelete._id);
+      toast.success('Customer deleted successfully!');
+      setShowDeleteConfirm(false);
+      setCustomerToDelete(null);
+      loadCustomers();
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete customer');
+    }
+  };
+
+  const closeDeleteModals = () => {
+    setShowDeleteConfirm(false);
+    setShowCannotDelete(false);
+    setCustomerToDelete(null);
   };
 
   const resetForm = () => {
@@ -297,7 +322,7 @@ export default function Customers() {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(customer._id)}
+                          onClick={() => handleDeleteClick(customer)}
                           className="inline-flex items-center px-3 py-1.5 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
                         >
                           <HiTrash className="w-4 h-4 mr-1" />
@@ -517,6 +542,103 @@ export default function Customers() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && customerToDelete && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-gray-900/75 backdrop-blur-sm" onClick={closeDeleteModals} />
+
+            <div className="relative z-50 inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-3xl">
+              <div className="flex flex-col items-center">
+                {/* Warning Icon */}
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
+                  <HiExclamationCircle className="w-10 h-10 text-red-600" />
+                </div>
+
+                {/* Title */}
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Delete Customer?
+                </h3>
+
+                {/* Message */}
+                <p className="text-center text-gray-600 mb-4">
+                  Are you sure you want to delete <span className="font-semibold text-gray-900">{customerToDelete.name}</span>?
+                </p>
+                <p className="text-center text-sm text-gray-500 mb-6">
+                  This action cannot be undone. All customer information will be permanently removed.
+                </p>
+
+                {/* Buttons */}
+                <div className="flex gap-3 w-full">
+                  <button
+                    onClick={closeDeleteModals}
+                    className="flex-1 px-4 py-3 text-gray-700 font-medium bg-gray-100 hover:bg-gray-200 rounded-xl transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="flex-1 px-4 py-3 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 shadow-lg shadow-red-500/50 transition-all"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cannot Delete Modal (Outstanding Balance) */}
+      {showCannotDelete && customerToDelete && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-gray-900/75 backdrop-blur-sm" onClick={closeDeleteModals} />
+
+            <div className="relative z-50 inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-3xl">
+              <div className="flex flex-col items-center">
+                {/* Warning Icon */}
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 mb-4">
+                  <HiExclamationCircle className="w-10 h-10 text-amber-600" />
+                </div>
+
+                {/* Title */}
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Cannot Delete Customer
+                </h3>
+
+                {/* Message */}
+                <p className="text-center text-gray-600 mb-3">
+                  <span className="font-semibold text-gray-900">{customerToDelete.name}</span> cannot be deleted because they have an outstanding balance.
+                </p>
+
+                {/* Outstanding Amount Card */}
+                <div className="w-full bg-gradient-to-br from-red-50 to-orange-50 border border-red-200 rounded-xl p-4 mb-4">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 mb-1">Outstanding Amount</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      ₹{customerToDelete.outstandingBalance?.toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-center text-sm text-gray-500 mb-6">
+                  Please ensure all invoices are paid or settled before deleting this customer.
+                </p>
+
+                {/* Button */}
+                <button
+                  onClick={closeDeleteModals}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50 transition-all"
+                >
+                  Got it
+                </button>
+              </div>
             </div>
           </div>
         </div>
