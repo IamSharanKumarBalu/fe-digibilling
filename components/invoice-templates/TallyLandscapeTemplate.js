@@ -1,5 +1,7 @@
 'use client';
 
+import { getStateCode } from '@/utils/stateCodes';
+
 const B = '1px solid #000';
 const BD = '1px dashed #bbb';
 
@@ -40,10 +42,10 @@ export default function TallyLandscapeTemplate({ invoice, shopSettings }) {
     const hasTerms = shopSettings?.invoiceTerms || shopSettings?.termsAndConditions;
     const hasBankDetails = shopSettings?.invBankName || shopSettings?.invAccountNumber;
 
-    // HSN-wise tax summary
+    // HSN/SAC-wise tax summary
     const hsnMap = {};
     invoice.items.forEach(item => {
-        const key = item.hsnCode || 'N/A';
+        const key = item.hsnCode || item.sacCode || 'N/A';
         if (!hsnMap[key]) hsnMap[key] = { taxableValue: 0, cgst: 0, sgst: 0, igst: 0, rate: item.gstRate };
         const taxable = item.sellingPrice * item.quantity;
         const taxAmt = item.totalAmount - taxable;
@@ -95,21 +97,29 @@ export default function TallyLandscapeTemplate({ invoice, shopSettings }) {
 
                 {/* ── Business Header (two-col for landscape) ── */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: B, paddingBottom: '5px', marginBottom: '0' }}>
-                    <div>
-                        <div style={{ fontSize: '17px', fontWeight: 'bold' }}>{shopSettings?.shopName || 'Business Name'}</div>
-                        {shopSettings?.address && <div style={{ fontSize: '10px' }}>{shopSettings.address}</div>}
-                        <div style={{ fontSize: '10px' }}>
-                            {[shopSettings?.city, shopSettings?.state].filter(Boolean).join(', ')}
-                            {shopSettings?.pincode ? ` - ${shopSettings.pincode}` : ''}
-                        </div>
-                        <div style={{ fontSize: '10px' }}>
-                            {shopSettings?.phone && `Ph: ${shopSettings.phone}`}
-                            {shopSettings?.phone && shopSettings?.email && ' | '}
-                            {shopSettings?.email && `Email: ${shopSettings.email}`}
-                        </div>
-                        {shopSettings?.gstin && (
-                            <div style={{ fontSize: '10px', fontWeight: 'bold' }}>GSTIN/UIN: {shopSettings.gstin}</div>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        {shopSettings?.logo && (
+                            <div style={{ flexShrink: 0 }}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={shopSettings.logo} alt="Logo" style={{ height: '50px', width: 'auto', objectFit: 'contain' }} />
+                            </div>
                         )}
+                        <div>
+                            <div style={{ fontSize: '17px', fontWeight: 'bold' }}>{shopSettings?.shopName || 'Business Name'}</div>
+                            {shopSettings?.address && <div style={{ fontSize: '10px' }}>{shopSettings.address}</div>}
+                            <div style={{ fontSize: '10px' }}>
+                                {[shopSettings?.city, shopSettings?.state].filter(Boolean).join(', ')}
+                                {shopSettings?.pincode ? ` - ${shopSettings.pincode}` : ''}
+                            </div>
+                            <div style={{ fontSize: '10px' }}>
+                                {shopSettings?.phone && `Ph: ${shopSettings.phone}`}
+                                {shopSettings?.phone && shopSettings?.email && ' | '}
+                                {shopSettings?.email && `Email: ${shopSettings.email}`}
+                            </div>
+                            {shopSettings?.gstin && (
+                                <div style={{ fontSize: '10px', fontWeight: 'bold' }}>GSTIN/UIN: {shopSettings.gstin}</div>
+                            )}
+                        </div>
                     </div>
                     <div style={{ fontSize: '14px', fontWeight: 'bold', border: B, padding: '3px 12px', marginTop: '4px' }}>
                         {isBOS ? 'BILL OF SUPPLY' : 'TAX INVOICE'}
@@ -139,7 +149,11 @@ export default function TallyLandscapeTemplate({ invoice, shopSettings }) {
                                         ? <div style={{ fontSize: '10px' }}>GSTIN/UIN : <strong>{invoice.customerGstin}</strong></div>
                                         : <div style={{ fontSize: '10px' }}>GSTIN/UIN : </div>
                                     }
-                                    <div style={{ fontSize: '10px' }}>State Name : &nbsp;&nbsp;&nbsp; Code :</div>
+                                    <div style={{ fontSize: '10px' }}>
+                                        State Name : <strong>{invoice.shipToState || invoice.customerState || ''}</strong>
+                                        &nbsp;&nbsp;&nbsp;
+                                        Code : <strong>{getStateCode(invoice.shipToState || invoice.customerState || '')}</strong>
+                                    </div>
                                 </div>
                                 <div style={{ padding: '4px 5px' }}>
                                     <div style={{ fontSize: '9px', color: '#555', marginBottom: '1px' }}>Buyer (Bill to)</div>
@@ -150,7 +164,11 @@ export default function TallyLandscapeTemplate({ invoice, shopSettings }) {
                                         ? <div style={{ fontSize: '10px' }}>GSTIN/UIN : <strong>{invoice.customerGstin}</strong></div>
                                         : <div style={{ fontSize: '10px' }}>GSTIN/UIN : </div>
                                     }
-                                    <div style={{ fontSize: '10px' }}>State Name : &nbsp;&nbsp;&nbsp; Code :</div>
+                                    <div style={{ fontSize: '10px' }}>
+                                        State Name : <strong>{invoice.customerState || ''}</strong>
+                                        &nbsp;&nbsp;&nbsp;
+                                        Code : <strong>{getStateCode(invoice.customerState || '')}</strong>
+                                    </div>
                                 </div>
                             </td>
                             {/* Right: Invoice detail fields */}
@@ -214,7 +232,7 @@ export default function TallyLandscapeTemplate({ invoice, shopSettings }) {
                                             </div>
                                         )}
                                     </td>
-                                    <td style={{ border: B, padding: '3px 2px', textAlign: 'center', fontSize: '10px' }}>{item.hsnCode || ''}</td>
+                                    <td style={{ border: B, padding: '3px 2px', textAlign: 'center', fontSize: '10px' }}>{item.hsnCode || item.sacCode || ''}</td>
                                     <td style={{ border: B, padding: '3px 2px', textAlign: 'center', fontSize: '10px' }}>{item.quantity} {item.unit}</td>
                                     <td style={{ border: B, padding: '3px 2px', textAlign: 'center', fontSize: '10px' }}>{item.unit}</td>
                                     <td style={{ border: B, padding: '3px 2px', textAlign: 'right', fontSize: '10px' }}>{item.sellingPrice.toFixed(2)}</td>

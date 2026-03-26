@@ -62,8 +62,10 @@ export default function PaymentReceiptsPage() {
     setLoadingData(true);
     try {
       const data = await invoicesAPI.getAll();
+      // Handle both old (array) and new (object with invoices array) response format
+      const invoicesList = data.invoices || data;
       // Only show invoices where some payment has been received
-      setInvoices(data.filter(inv => inv.paidAmount > 0));
+      setInvoices(invoicesList.filter(inv => inv.paidAmount > 0));
     } catch (error) {
       console.error('Error loading payment receipts:', error);
       toast.error(error.message || 'Failed to load payment receipts');

@@ -10,7 +10,7 @@ import { proformaInvoicesAPI } from '@/utils/api';
 import Link from 'next/link';
 import {
     HiPlus, HiEye, HiPencil, HiTrash, HiSearch,
-    HiChevronLeft, HiChevronRight, HiDocumentText,
+    HiChevronLeft, HiChevronRight, HiDocumentText, HiSortDescending, HiSortAscending,
 } from 'react-icons/hi';
 
 const PAGE_SIZE = 10;
@@ -34,6 +34,7 @@ export default function ProformaInvoicesPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [deleting, setDeleting] = useState(false);
+    const [sortOrder, setSortOrder] = useState('desc'); // 'desc' = newest first, 'asc' = oldest first
 
     // Convert to Invoice state
     const [convertConfirm, setConvertConfirm] = useState(null);
@@ -75,9 +76,16 @@ export default function ProformaInvoicesPage() {
         );
     });
 
-    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    // Sort filtered results
+    const sorted = [...filtered].sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.proformaDate);
+        const dateB = new Date(b.createdAt || b.proformaDate);
+        return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    });
+
+    const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
     const safePage = Math.min(currentPage, totalPages);
-    const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+    const paginated = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
     const handleDelete = async () => {
         setDeleting(true);
@@ -119,17 +127,36 @@ export default function ProformaInvoicesPage() {
                     </Link>
                 </div>
 
-                {/* Search */}
+                {/* Search & Sort */}
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <div className="relative">
-                        <HiSearch className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search by proforma number, customer or status..."
-                            value={search}
-                            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent text-black"
-                        />
+                    <div className="flex gap-3 items-center">
+                        <div className="relative flex-1">
+                            <HiSearch className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search by proforma number, customer or status..."
+                                value={search}
+                                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent text-black"
+                            />
+                        </div>
+                        <button
+                            onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+                            className="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium whitespace-nowrap"
+                            title={sortOrder === 'desc' ? 'Newest First (Click for Oldest First)' : 'Oldest First (Click for Newest First)'}
+                        >
+                            {sortOrder === 'desc' ? (
+                                <>
+                                    <HiSortDescending className="w-5 h-5" />
+                                    <span className="hidden sm:inline">Newest First</span>
+                                </>
+                            ) : (
+                                <>
+                                    <HiSortAscending className="w-5 h-5" />
+                                    <span className="hidden sm:inline">Oldest First</span>
+                                </>
+                            )}
+                        </button>
                     </div>
                 </div>
 

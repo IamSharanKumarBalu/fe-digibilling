@@ -1,5 +1,7 @@
 'use client';
 
+import { getStateCode } from '@/utils/stateCodes';
+
 const B = '1px solid #000';
 const BD = '1px dashed #bbb';
 
@@ -40,10 +42,10 @@ export default function TallyPortraitTemplate({ invoice, shopSettings }) {
     const hasTerms = shopSettings?.invoiceTerms || shopSettings?.termsAndConditions;
     const hasBankDetails = shopSettings?.invBankName || shopSettings?.invAccountNumber;
 
-    // Build HSN-wise tax summary
+    // Build HSN/SAC-wise tax summary
     const hsnMap = {};
     invoice.items.forEach(item => {
-        const key = item.hsnCode || 'N/A';
+        const key = item.hsnCode || item.sacCode || 'N/A';
         if (!hsnMap[key]) hsnMap[key] = { taxableValue: 0, cgst: 0, sgst: 0, igst: 0, rate: item.gstRate };
         const taxable = item.sellingPrice * item.quantity;
         const taxAmt = item.totalAmount - taxable;
@@ -78,21 +80,29 @@ export default function TallyPortraitTemplate({ invoice, shopSettings }) {
         <div className="invoice-print" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#000', background: '#fff' }}>
 
             {/* ── Business Header ─────────────────────────── */}
-            <div style={{ textAlign: 'left', borderBottom: B, paddingBottom: '6px', marginBottom: '0' }}>
-                <div style={{ fontSize: '17px', fontWeight: 'bold' }}>{shopSettings?.shopName || 'Business Name'}</div>
-                {shopSettings?.address && <div style={{ fontSize: '10px' }}>{shopSettings.address}</div>}
-                <div style={{ fontSize: '10px' }}>
-                    {[shopSettings?.city, shopSettings?.state].filter(Boolean).join(', ')}
-                    {shopSettings?.pincode ? ` - ${shopSettings.pincode}` : ''}
-                </div>
-                <div style={{ fontSize: '10px' }}>
-                    {shopSettings?.phone && `Ph: ${shopSettings.phone}`}
-                    {shopSettings?.phone && shopSettings?.email && ' | '}
-                    {shopSettings?.email && `Email: ${shopSettings.email}`}
-                </div>
-                {shopSettings?.gstin && (
-                    <div style={{ fontSize: '10px', fontWeight: 'bold' }}>GSTIN/UIN: {shopSettings.gstin}</div>
+            <div style={{ borderBottom: B, paddingBottom: '6px', marginBottom: '0', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                {shopSettings?.logo && (
+                    <div style={{ flexShrink: 0 }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={shopSettings.logo} alt="Logo" style={{ height: '50px', width: 'auto', objectFit: 'contain' }} />
+                    </div>
                 )}
+                <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '17px', fontWeight: 'bold' }}>{shopSettings?.shopName || 'Business Name'}</div>
+                    {shopSettings?.address && <div style={{ fontSize: '10px' }}>{shopSettings.address}</div>}
+                    <div style={{ fontSize: '10px' }}>
+                        {[shopSettings?.city, shopSettings?.state].filter(Boolean).join(', ')}
+                        {shopSettings?.pincode ? ` - ${shopSettings.pincode}` : ''}
+                    </div>
+                    <div style={{ fontSize: '10px' }}>
+                        {shopSettings?.phone && `Ph: ${shopSettings.phone}`}
+                        {shopSettings?.phone && shopSettings?.email && ' | '}
+                        {shopSettings?.email && `Email: ${shopSettings.email}`}
+                    </div>
+                    {shopSettings?.gstin && (
+                        <div style={{ fontSize: '10px', fontWeight: 'bold' }}>GSTIN/UIN: {shopSettings.gstin}</div>
+                    )}
+                </div>
             </div>
 
             {/* ── Invoice Type ─────────────────────────────── */}
@@ -124,7 +134,11 @@ export default function TallyPortraitTemplate({ invoice, shopSettings }) {
                                     ? <div style={{ fontSize: '10px' }}>GSTIN/UIN : <strong>{invoice.customerGstin}</strong></div>
                                     : <div style={{ fontSize: '10px' }}>GSTIN/UIN : </div>
                                 }
-                                <div style={{ fontSize: '10px' }}>State Name : &nbsp;&nbsp;&nbsp; Code :</div>
+                                <div style={{ fontSize: '10px' }}>
+                                    State Name : <strong>{invoice.shipToState || invoice.customerState || ''}</strong>
+                                    &nbsp;&nbsp;&nbsp;
+                                    Code : <strong>{getStateCode(invoice.shipToState || invoice.customerState || '')}</strong>
+                                </div>
                             </div>
                             {/* Buyer (Bill to) */}
                             <div style={{ padding: '4px 5px' }}>
@@ -136,7 +150,11 @@ export default function TallyPortraitTemplate({ invoice, shopSettings }) {
                                     ? <div style={{ fontSize: '10px' }}>GSTIN/UIN : <strong>{invoice.customerGstin}</strong></div>
                                     : <div style={{ fontSize: '10px' }}>GSTIN/UIN : </div>
                                 }
-                                <div style={{ fontSize: '10px' }}>State Name : &nbsp;&nbsp;&nbsp; Code :</div>
+                                <div style={{ fontSize: '10px' }}>
+                                    State Name : <strong>{invoice.customerState || ''}</strong>
+                                    &nbsp;&nbsp;&nbsp;
+                                    Code : <strong>{getStateCode(invoice.customerState || '')}</strong>
+                                </div>
                             </div>
                         </td>
 
@@ -197,7 +215,7 @@ export default function TallyPortraitTemplate({ invoice, shopSettings }) {
                                         </div>
                                     )}
                                 </td>
-                                <td style={{ border: B, padding: '3px 2px', textAlign: 'center', fontSize: '10px' }}>{item.hsnCode || ''}</td>
+                                <td style={{ border: B, padding: '3px 2px', textAlign: 'center', fontSize: '10px' }}>{item.hsnCode || item.sacCode || ''}</td>
                                 <td style={{ border: B, padding: '3px 2px', textAlign: 'center', fontSize: '10px' }}>{item.quantity} {item.unit}</td>
                                 <td style={{ border: B, padding: '3px 2px', textAlign: 'right', fontSize: '10px' }}>{item.sellingPrice.toFixed(2)}</td>
                                 <td style={{ border: B, padding: '3px 2px', textAlign: 'center', fontSize: '10px' }}>{item.unit}</td>

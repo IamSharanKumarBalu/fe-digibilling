@@ -126,7 +126,7 @@ export default function ModernTemplate({ invoice, shopSettings }) {
                                         </div>
                                     )}
                                 </td>
-                                <td className="px-4 py-3 text-sm text-gray-900 text-center">{item.hsnCode || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-900 text-center">{item.hsnCode || item.sacCode || '-'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-900 text-center">{item.quantity} {item.unit}</td>
                                 <td className="px-4 py-3 text-sm text-gray-900 text-right">₹{item.sellingPrice.toFixed(2)}</td>
                                 <td className="px-4 py-3 text-sm text-gray-900 text-center">{item.gstRate}%</td>
