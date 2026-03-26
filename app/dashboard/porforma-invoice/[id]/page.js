@@ -109,6 +109,12 @@ export default function ProformaInvoiceDetail() {
                         <div className="pp bg-white rounded-xl border border-gray-200 p-8">
                             <div className="flex justify-between items-start mb-8">
                                 <div>
+                                    {shop.logo && (
+                                        <div className="mb-3">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={shop.logo} alt={shop.shopName || 'Shop Logo'} className="h-16 object-contain" />
+                                        </div>
+                                    )}
                                     <h1 className="text-2xl font-bold text-gray-900">{shop.shopName || 'Your Business'}</h1>
                                     {shop.address && <p className="text-sm text-gray-600 mt-1">{shop.address}</p>}
                                     {shop.phone && <p className="text-sm text-gray-600">{shop.phone}</p>}
@@ -122,13 +128,58 @@ export default function ProformaInvoiceDetail() {
                                     <p className="text-sm text-gray-500 mt-2">Date: {p.proformaDate ? new Date(p.proformaDate).toLocaleDateString('en-IN') : '—'}</p>
                                 </div>
                             </div>
-                            <div className="bg-gray-50 rounded-lg p-4 mb-8">
+                            <div className="bg-gray-50 rounded-lg p-4 mb-6">
                                 <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Bill To</p>
                                 <p className="font-semibold text-gray-900">{p.customerName}</p>
                                 {p.customerPhone && <p className="text-sm text-gray-600">{p.customerPhone}</p>}
                                 {p.customerAddress && <p className="text-sm text-gray-600 mt-1">{p.customerAddress}</p>}
                                 {p.customerGstin && <p className="text-sm text-gray-600">GSTIN: {p.customerGstin}</p>}
                             </div>
+
+                            {/* Purchase Order Reference — only if provided */}
+                            {(p.poNumber || p.poDate) && (
+                                <div className="mb-6 flex gap-6 text-sm">
+                                    {p.poNumber && (
+                                        <div>
+                                            <span className="text-gray-500 font-medium">P.O. No.: </span>
+                                            <span className="text-gray-900 font-semibold">{p.poNumber}</span>
+                                        </div>
+                                    )}
+                                    {p.poDate && (
+                                        <div>
+                                            <span className="text-gray-500 font-medium">P.O. Date: </span>
+                                            <span className="text-gray-900 font-semibold">{new Date(p.poDate).toLocaleDateString('en-IN')}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Additional Details — only if any value exists */}
+                            {(p.eWayBillNumber || p.deliveryNote || p.referenceNo || p.otherReferences || p.termsOfDelivery || p.destination) && (
+                                <div className="mb-6 bg-blue-50 rounded-lg p-4">
+                                    <h3 className="text-sm font-semibold text-gray-700 mb-2">Additional Details:</h3>
+                                    <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
+                                        {p.eWayBillNumber && (
+                                            <p><span className="font-medium">E-Way Bill No.: </span>{p.eWayBillNumber}</p>
+                                        )}
+                                        {p.deliveryNote && (
+                                            <p><span className="font-medium">Delivery Note: </span>{p.deliveryNote}</p>
+                                        )}
+                                        {p.referenceNo && (
+                                            <p><span className="font-medium">Reference No.: </span>{p.referenceNo}</p>
+                                        )}
+                                        {p.otherReferences && (
+                                            <p><span className="font-medium">Other References: </span>{p.otherReferences}</p>
+                                        )}
+                                        {p.termsOfDelivery && (
+                                            <p><span className="font-medium">Terms of Delivery: </span>{p.termsOfDelivery}</p>
+                                        )}
+                                        {p.destination && (
+                                            <p><span className="font-medium">Destination: </span>{p.destination}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                             <table className="w-full mb-8">
                                 <thead>
                                     <tr className="border-b-2 border-gray-200">
@@ -144,7 +195,7 @@ export default function ProformaInvoiceDetail() {
                                         return (
                                             <tr key={idx}>
                                                 <td className="py-3 text-sm text-gray-500">{idx + 1}</td>
-                                                <td className="py-3 text-sm text-gray-900">{item.productName || 'Product'}</td>
+                                                <td className="py-3 text-sm text-gray-900">{item.productName || item.serviceName || 'Item'}</td>
                                                 <td className="py-3 text-sm text-gray-700 text-right">{item.quantity}</td>
                                                 <td className="py-3 text-sm text-gray-700 text-right">₹{Number(item.sellingPrice).toFixed(2)}</td>
                                                 <td className="py-3 text-sm text-gray-700 text-right">{item.gstRate}%</td>
@@ -156,13 +207,13 @@ export default function ProformaInvoiceDetail() {
                             </table>
                             <div className="flex justify-end">
                                 <div className="w-72 space-y-2">
-                                    <div className="flex justify-between text-sm"><span className="text-gray-600">Subtotal</span><span>₹{Number(p.subtotal || 0).toFixed(2)}</span></div>
-                                    {Number(p.totalCGST) > 0 && <div className="flex justify-between text-sm"><span className="text-gray-600">CGST</span><span>₹{Number(p.totalCGST).toFixed(2)}</span></div>}
-                                    {Number(p.totalSGST) > 0 && <div className="flex justify-between text-sm"><span className="text-gray-600">SGST</span><span>₹{Number(p.totalSGST).toFixed(2)}</span></div>}
-                                    {Number(p.totalIGST) > 0 && <div className="flex justify-between text-sm"><span className="text-gray-600">IGST</span><span>₹{Number(p.totalIGST).toFixed(2)}</span></div>}
+                                    <div className="flex justify-between text-sm"><span className="text-gray-600">Subtotal</span><span className='text-gray-800'>₹{Number(p.subtotal || 0).toFixed(2)}</span></div>
+                                    {Number(p.totalCGST) > 0 && <div className="flex justify-between text-sm"><span className="text-gray-600">CGST</span><span className='text-gray-800'>₹{Number(p.totalCGST).toFixed(2)}</span></div>}
+                                    {Number(p.totalSGST) > 0 && <div className="flex justify-between text-sm"><span className="text-gray-600">SGST</span><span className='text-gray-800'>₹{Number(p.totalSGST).toFixed(2)}</span></div>}
+                                    {Number(p.totalIGST) > 0 && <div className="flex justify-between text-sm"><span className="text-gray-600">IGST</span><span className='text-gray-800'>₹{Number(p.totalIGST).toFixed(2)}</span></div>}
                                     {Number(p.discount) > 0 && <div className="flex justify-between text-sm"><span className="text-gray-600">Discount</span><span className="text-red-600">-₹{Number(p.discount).toFixed(2)}</span></div>}
                                     <div className="pt-2 border-t-2 border-gray-200 flex justify-between font-bold text-lg">
-                                        <span>Grand Total</span><span className="text-violet-600">₹{Number(p.grandTotal || 0).toLocaleString('en-IN')}</span>
+                                        <span className='text-gray-800'>Grand Total</span><span className="text-violet-600">₹{Number(p.grandTotal || 0).toLocaleString('en-IN')}</span>
                                     </div>
                                 </div>
                             </div>

@@ -60,7 +60,7 @@ export default function NewProformaInvoice() {
     // ── Additional details accordion ───────────────────────────────────────
     const [showAdditional, setShowAdditional] = useState(false);
     const [additionalDetails, setAdditionalDetails] = useState({
-        deliveryNote: '', referenceNo: '', otherReferences: '', termsOfDelivery: '', destination: '',
+        eWayBillNumber: '', deliveryNote: '', referenceNo: '', otherReferences: '', termsOfDelivery: '', destination: '',
     });
 
     // ── Init ───────────────────────────────────────────────────────────────
@@ -135,7 +135,7 @@ export default function NewProformaInvoice() {
 
     // ── Item helpers ───────────────────────────────────────────────────────
     const addProductItem = () => setItems(p => [...p, {
-        itemType: 'product', product: '', batch: '', selectedBatch: '',
+        itemType: 'product', product: '', batch: '', selectedBatch: '', productName: '',
         quantity: 1, unit: 'PCS', sellingPrice: 0, gstRate: 12, mrp: '',
     }]);
 
@@ -154,6 +154,7 @@ export default function NewProformaInvoice() {
                 updated[index].selectedBatch = value;
                 updated[index].batch = batch.batchId;
                 updated[index].product = batch.productId;
+                updated[index].productName = batch.productName;
                 updated[index].sellingPrice = batch.sellingPrice;
                 updated[index].gstRate = batch.gstRate;
                 updated[index].mrp = batch.mrp;
@@ -182,6 +183,7 @@ export default function NewProformaInvoice() {
         if (items.length === 0) { toast.error('Add at least one item'); return; }
         setSubmitting(true);
         try {
+            console.log('Items before mapping:', items);
             const data = {
                 customer: selectedCustomer?._id,
                 customerName, customerPhone,
@@ -192,6 +194,7 @@ export default function NewProformaInvoice() {
                     itemType: i.itemType,
                     product: i.product || undefined,
                     batch: i.batch || undefined,
+                    productName: i.productName || '',
                     serviceName: i.serviceName || '',
                     sacCode: i.sacCode || '',
                     quantity: i.quantity,
@@ -227,6 +230,7 @@ export default function NewProformaInvoice() {
                 }),
                 // Additional
                 ...(shopSettings?.pfEnableAdditionalDetails && {
+                    eWayBillNumber: additionalDetails.eWayBillNumber,
                     deliveryNote: additionalDetails.deliveryNote,
                     referenceNo: additionalDetails.referenceNo,
                     otherReferences: additionalDetails.otherReferences,
@@ -235,6 +239,7 @@ export default function NewProformaInvoice() {
                 }),
                 notes, terms,
             };
+            console.log('Data being sent to API:', JSON.stringify(data, null, 2));
             const pf = await proformaInvoicesAPI.create(data);
             toast.success('Proforma invoice created!');
             router.push(`/dashboard/porforma-invoice/${pf._id}`);
@@ -654,6 +659,7 @@ export default function NewProformaInvoice() {
                                     {showAdditional && (
                                         <div className="px-6 pb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {[
+                                                { label: 'E-Way Bill Number', key: 'eWayBillNumber', placeholder: 'E-Way Bill No.' },
                                                 { label: 'Delivery Note', key: 'deliveryNote', placeholder: 'Delivery note reference' },
                                                 { label: 'Reference No.', key: 'referenceNo', placeholder: 'Internal reference' },
                                                 { label: 'Other References', key: 'otherReferences', placeholder: 'Any other references' },

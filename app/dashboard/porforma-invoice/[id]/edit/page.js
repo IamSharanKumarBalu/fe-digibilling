@@ -39,6 +39,12 @@ export default function EditProformaInvoice() {
         name: '', phone: '', email: '', gstin: '', address: '', city: '', state: '', pincode: '',
     });
 
+    // PO and Additional details
+    const [po, setPo] = useState({ poNumber: '', poDate: '' });
+    const [additionalDetails, setAdditionalDetails] = useState({
+        eWayBillNumber: '', deliveryNote: '', referenceNo: '', otherReferences: '', termsOfDelivery: '', destination: '',
+    });
+
     useEffect(() => {
         if (!authLoading && !user) router.push('/login');
         else if (user) loadData();
@@ -81,6 +87,19 @@ export default function EditProformaInvoice() {
                 gstRate: item.gstRate || 0,
                 availableQuantity: null,
             })));
+            // Load PO and Additional details
+            setPo({
+                poNumber: pd.poNumber || '',
+                poDate: pd.poDate ? new Date(pd.poDate).toISOString().split('T')[0] : '',
+            });
+            setAdditionalDetails({
+                eWayBillNumber: pd.eWayBillNumber || '',
+                deliveryNote: pd.deliveryNote || '',
+                referenceNo: pd.referenceNo || '',
+                otherReferences: pd.otherReferences || '',
+                termsOfDelivery: pd.termsOfDelivery || '',
+                destination: pd.destination || '',
+            });
             if (pd.customer) {
                 const matched = customersData.find(c => c._id === (pd.customer?._id || pd.customer));
                 if (matched) setSelectedCustomer(matched);
@@ -123,7 +142,7 @@ export default function EditProformaInvoice() {
         if (field === 'product' && value) {
             try {
                 const batch = JSON.parse(value);
-                updated[index] = { ...updated[index], selectedBatch: value, batch: batch.batchId, product: batch.productId, sellingPrice: batch.sellingPrice, gstRate: batch.gstRate, mrp: batch.mrp, availableQuantity: batch.availableQuantity };
+                updated[index] = { ...updated[index], selectedBatch: value, batch: batch.batchId, product: batch.productId, productName: batch.productName, sellingPrice: batch.sellingPrice, gstRate: batch.gstRate, mrp: batch.mrp, availableQuantity: batch.availableQuantity };
             } catch { updated[index][field] = value; }
         } else { updated[index][field] = value; }
         setItems(updated);
@@ -155,6 +174,16 @@ export default function EditProformaInvoice() {
                 totalSGST: taxType === 'CGST_SGST' ? totals.totalTax / 2 : 0,
                 totalIGST: taxType === 'IGST' ? totals.totalTax : 0,
                 discount, roundOff: totals.roundOff, grandTotal: totals.finalTotal, notes, terms,
+                // PO details
+                poNumber: po.poNumber,
+                poDate: po.poDate || undefined,
+                // Additional details
+                eWayBillNumber: additionalDetails.eWayBillNumber,
+                deliveryNote: additionalDetails.deliveryNote,
+                referenceNo: additionalDetails.referenceNo,
+                otherReferences: additionalDetails.otherReferences,
+                termsOfDelivery: additionalDetails.termsOfDelivery,
+                destination: additionalDetails.destination,
             });
             toast.success('Proforma invoice updated!');
             router.push(`/dashboard/porforma-invoice/${params.id}`);
@@ -323,6 +352,46 @@ export default function EditProformaInvoice() {
                             <div className="pt-3 border-t border-gray-200 flex justify-between text-lg font-bold">
                                 <span>Grand Total:</span><span className="text-violet-600">₹{totals.finalTotal.toLocaleString('en-IN')}</span>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* PO Details */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Purchase Order Details</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">P.O. Number</label>
+                                <input type="text" value={po.poNumber} onChange={(e) => setPo({ ...po, poNumber: e.target.value })}
+                                    placeholder="Purchase Order Number"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">P.O. Date</label>
+                                <input type="date" value={po.poDate} onChange={(e) => setPo({ ...po, poDate: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Additional Details */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Additional Details</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[
+                                { label: 'E-Way Bill Number', key: 'eWayBillNumber', placeholder: 'E-Way Bill No.' },
+                                { label: 'Delivery Note', key: 'deliveryNote', placeholder: 'Delivery note reference' },
+                                { label: 'Reference No.', key: 'referenceNo', placeholder: 'Internal reference' },
+                                { label: 'Other References', key: 'otherReferences', placeholder: 'Any other references' },
+                                { label: 'Terms of Delivery', key: 'termsOfDelivery', placeholder: 'e.g. Ex-Works, CIF' },
+                                { label: 'Destination', key: 'destination', placeholder: 'Final destination' },
+                            ].map(({ label, key, placeholder }) => (
+                                <div key={key}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+                                    <input type="text" placeholder={placeholder} value={additionalDetails[key]}
+                                        onChange={(e) => setAdditionalDetails({ ...additionalDetails, [key]: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500" />
+                                </div>
+                            ))}
                         </div>
                     </div>
 

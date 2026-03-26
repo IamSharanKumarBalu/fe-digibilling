@@ -20,6 +20,7 @@ export default function InvoiceDetail() {
   const [invoice, setInvoice] = useState(null);
   const [shopSettings, setShopSettings] = useState(null);
   const [loadingInvoice, setLoadingInvoice] = useState(true);
+  const [loadingSettings, setLoadingSettings] = useState(true);
 
   // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -62,6 +63,8 @@ export default function InvoiceDetail() {
       setShopSettings(data);
     } catch (error) {
       console.error('Error loading shop settings:', error);
+    } finally {
+      setLoadingSettings(false);
     }
   };
 
@@ -178,7 +181,7 @@ _This is a computer generated invoice_`;
     }
   };
 
-  if (loading || !user || loadingInvoice) {
+  if (loading || !user || loadingInvoice || loadingSettings) {
     return <PageLoader text="Loading invoice details..." />;
   }
 
