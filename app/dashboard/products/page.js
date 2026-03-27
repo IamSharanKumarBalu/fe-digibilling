@@ -164,13 +164,21 @@ export default function Products() {
       newErrors.sellingPrice = 'Selling Price is required and must be greater than 0';
     }
 
-    // Serial numbers must match stock quantity if any are entered
+    // Serial numbers validation
     if (formData.serialNumbers.length > 0) {
       const qty = parseFloat(formData.stockQuantity);
       if (!formData.stockQuantity || isNaN(qty) || qty <= 0) {
         newErrors.serialNumbers = 'Set a Stock Quantity first — serial numbers count must match it';
-      } else if (formData.serialNumbers.length !== qty) {
-        newErrors.serialNumbers = `Serial numbers count (${formData.serialNumbers.length}) must match Stock Quantity (${qty}). Add or remove ${Math.abs(formData.serialNumbers.length - qty)} number${Math.abs(formData.serialNumbers.length - qty) !== 1 ? 's' : ''}.`;
+      } else if (editingProduct) {
+        // For existing products: serial numbers can be >= stock quantity (some may have been sold)
+        if (formData.serialNumbers.length < qty) {
+          newErrors.serialNumbers = `Serial numbers count (${formData.serialNumbers.length}) is less than Stock Quantity (${qty}). Add ${qty - formData.serialNumbers.length} more number${qty - formData.serialNumbers.length !== 1 ? 's' : ''}.`;
+        }
+      } else {
+        // For new products: serial numbers must exactly match stock quantity
+        if (formData.serialNumbers.length !== qty) {
+          newErrors.serialNumbers = `Serial numbers count (${formData.serialNumbers.length}) must match Stock Quantity (${qty}). Add or remove ${Math.abs(formData.serialNumbers.length - qty)} number${Math.abs(formData.serialNumbers.length - qty) !== 1 ? 's' : ''}.`;
+        }
       }
     }
 
