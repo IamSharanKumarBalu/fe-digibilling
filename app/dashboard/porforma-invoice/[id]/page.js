@@ -217,6 +217,52 @@ export default function ProformaInvoiceDetail() {
                                     </div>
                                 </div>
                             </div>
+                            {/* Bank Details - Use proforma bank details if available, otherwise fall back to invoice bank details */}
+                            {(shop.pfBankName || shop.pfAccountNumber || shop.pfIfscCode || shop.invBankName || shop.invAccountNumber || shop.invIfscCode) && (
+                                <div className="mt-8 pt-6 border-t border-gray-200">
+                                    <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Bank Details</p>
+                                    <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                                        {(shop.pfAccountHolder || shop.invAccountHolder) && (
+                                            <div>
+                                                <span className="text-gray-500 font-medium">Account Holder: </span>
+                                                <span className="text-gray-900 font-semibold">{shop.pfAccountHolder || shop.invAccountHolder}</span>
+                                            </div>
+                                        )}
+                                        {(shop.pfBankName || shop.invBankName) && (
+                                            <div>
+                                                <span className="text-gray-500 font-medium">Bank Name: </span>
+                                                <span className="text-gray-900 font-semibold">{shop.pfBankName || shop.invBankName}</span>
+                                            </div>
+                                        )}
+                                        {(shop.pfAccountNumber || shop.invAccountNumber) && (
+                                            <div>
+                                                <span className="text-gray-500 font-medium">Account Number: </span>
+                                                <span className="text-gray-900 font-semibold">{shop.pfAccountNumber || shop.invAccountNumber}</span>
+                                            </div>
+                                        )}
+                                        {(shop.pfIfscCode || shop.invIfscCode) && (
+                                            <div>
+                                                <span className="text-gray-500 font-medium">IFSC Code: </span>
+                                                <span className="text-gray-900 font-semibold">{shop.pfIfscCode || shop.invIfscCode}</span>
+                                            </div>
+                                        )}
+                                        {(shop.pfBranchName || shop.invBranchName) && (
+                                            <div>
+                                                <span className="text-gray-500 font-medium">Branch: </span>
+                                                <span className="text-gray-900 font-semibold">{shop.pfBranchName || shop.invBranchName}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {(shop.pfQrCode || shop.invQrCode) && (
+                                        <div className="mt-4">
+                                            <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Payment QR Code</p>
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={shop.pfQrCode || shop.invQrCode} alt="Payment QR Code" className="w-32 h-32 border border-gray-200 rounded" />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             {(p.notes || p.terms) && (
                                 <div className="mt-8 pt-6 border-t border-gray-200 space-y-3">
                                     {p.notes && <div><p className="text-xs font-semibold text-gray-500 uppercase mb-1">Notes</p><p className="text-sm text-gray-700">{p.notes}</p></div>}

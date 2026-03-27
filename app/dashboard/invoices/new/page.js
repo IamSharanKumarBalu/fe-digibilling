@@ -1161,8 +1161,8 @@ function NewInvoiceContent() {
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                               <option value="">Select Product</option>
-                              {products.map((batch) => (
-                                <option key={batch.batchId || batch.productId} value={JSON.stringify(batch)}>
+                              {products.map((batch, batchIdx) => (
+                                <option key={`${batch.productId}-${batch.batchId || 'no-batch'}-${batchIdx}`} value={JSON.stringify(batch)}>
                                   {batch.label}
                                 </option>
                               ))}
