@@ -1255,12 +1255,9 @@ export default function NewPurchasePage() {
                   onChange={handleProductFormChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-gray-900 placeholder-gray-500"
                 >
-                  <option value="PCS">Pieces</option>
-                  <option value="BOX">Box</option>
-                  <option value="STRIP">Strip</option>
-                  <option value="BOTTLE">Bottle</option>
-                  <option value="KG">KG</option>
-                  <option value="LITRE">Litre</option>
+                  {['ANN', 'BAG', 'BAL', 'BDL', 'BKL', 'BOTTLE', 'BOU', 'BOX', 'BTL', 'BUN', 'CAN', 'CBM', 'CCM', 'CMS', 'CTN', 'DAY', 'DAYS', 'DOZ', 'DRM', 'GGK', 'GM', 'GMS', 'GRS', 'GYD', 'HRS', 'JOB', 'KG', 'KGS', 'KLR', 'KME', 'LITRE', 'LTR', 'ML', 'MLT', 'MON', 'MONTHS', 'MTR', 'NOS', 'OTH', 'PAC', 'PCS', 'PKT', 'PRS', 'QTL', 'ROL', 'SET', 'SQF', 'SQM', 'SQY', 'STRIP', 'TBS', 'TGM', 'THD', 'TON', 'TUB', 'UGS', 'UNT', 'YDS'].map(u => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
                 </select>
               </div>
             </div>

@@ -290,7 +290,7 @@ export default function EditDeliveryChallan() {
                                     <div className="w-24">
                                         <select value={item.unit || 'PCS'} onChange={(e) => updateItem(index, 'unit', e.target.value)}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                                            {['PCS', 'BOX', 'KG', 'LITRE', 'STRIP', 'BOTTLE'].map(u => <option key={u} value={u}>{u}</option>)}
+                                            {['ANN', 'BAG', 'BAL', 'BDL', 'BKL', 'BOTTLE', 'BOU', 'BOX', 'BTL', 'BUN', 'CAN', 'CBM', 'CCM', 'CMS', 'CTN', 'DAY', 'DAYS', 'DOZ', 'DRM', 'GGK', 'GM', 'GMS', 'GRS', 'GYD', 'HRS', 'JOB', 'KG', 'KGS', 'KLR', 'KME', 'LITRE', 'LTR', 'ML', 'MLT', 'MON', 'MONTHS', 'MTR', 'NOS', 'OTH', 'PAC', 'PCS', 'PKT', 'PRS', 'QTL', 'ROL', 'SET', 'SQF', 'SQM', 'SQY', 'STRIP', 'TBS', 'TGM', 'THD', 'TON', 'TUB', 'UGS', 'UNT', 'YDS'].map(u => <option key={u} value={u}>{u}</option>)}
                                         </select>
                                     </div>
                                     <div className="flex-1">

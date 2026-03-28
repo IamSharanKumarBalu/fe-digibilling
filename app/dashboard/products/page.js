@@ -957,12 +957,9 @@ export default function Products() {
                       onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     >
-                      <option value="PCS">PCS</option>
-                      <option value="BOX">BOX</option>
-                      <option value="STRIP">STRIP</option>
-                      <option value="BOTTLE">BOTTLE</option>
-                      <option value="KG">KG</option>
-                      <option value="LITRE">LITRE</option>
+                      {['ANN', 'BAG', 'BAL', 'BDL', 'BKL', 'BOTTLE', 'BOU', 'BOX', 'BTL', 'BUN', 'CAN', 'CBM', 'CCM', 'CMS', 'CTN', 'DAY', 'DAYS', 'DOZ', 'DRM', 'GGK', 'GM', 'GMS', 'GRS', 'GYD', 'HRS', 'JOB', 'KG', 'KGS', 'KLR', 'KME', 'LITRE', 'LTR', 'ML', 'MLT', 'MON', 'MONTHS', 'MTR', 'NOS', 'OTH', 'PAC', 'PCS', 'PKT', 'PRS', 'QTL', 'ROL', 'SET', 'SQF', 'SQM', 'SQY', 'STRIP', 'TBS', 'TGM', 'THD', 'TON', 'TUB', 'UGS', 'UNT', 'YDS'].map(u => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
                     </select>
                   </div>
 

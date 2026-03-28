@@ -534,7 +534,7 @@ export default function NewQuotation() {
                       <div className="col-span-3 md:col-span-1">
                         <select value={item.unit || 'PCS'} onChange={e => updateItem(index, 'unit', e.target.value)}
                           className="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white">
-                          {['PCS', 'NOS', 'KG', 'GM', 'LTR', 'ML', 'MTR', 'BOX', 'PKT', 'SET'].map(u => (
+                          {['ANN', 'BAG', 'BAL', 'BDL', 'BKL', 'BOTTLE', 'BOU', 'BOX', 'BTL', 'BUN', 'CAN', 'CBM', 'CCM', 'CMS', 'CTN', 'DAY', 'DAYS', 'DOZ', 'DRM', 'GGK', 'GM', 'GMS', 'GRS', 'GYD', 'HRS', 'JOB', 'KG', 'KGS', 'KLR', 'KME', 'LITRE', 'LTR', 'ML', 'MLT', 'MON', 'MONTHS', 'MTR', 'NOS', 'OTH', 'PAC', 'PCS', 'PKT', 'PRS', 'QTL', 'ROL', 'SET', 'SQF', 'SQM', 'SQY', 'STRIP', 'TBS', 'TGM', 'THD', 'TON', 'TUB', 'UGS', 'UNT', 'YDS'].map(u => (
                             <option key={u} value={u}>{u}</option>
                           ))}
                         </select>
