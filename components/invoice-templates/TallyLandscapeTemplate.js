@@ -38,7 +38,7 @@ function rupeeWords(amount) {
 }
 
 export default function TallyLandscapeTemplate({ invoice, shopSettings }) {
-    const isBOS = invoice.invoiceType === 'bill-of-supply';
+    const isBOS = shopSettings?.gstScheme === 'COMPOSITION';
     const hasTerms = shopSettings?.invoiceTerms || shopSettings?.termsAndConditions;
     const hasBankDetails = shopSettings?.invBankName || shopSettings?.invAccountNumber;
 

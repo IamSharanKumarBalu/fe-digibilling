@@ -151,14 +151,14 @@ export default function DeliveryChallanDetail() {
                                         <th className="text-right py-3 text-sm font-semibold text-gray-600">Qty</th>
                                         <th className="text-right py-3 text-sm font-semibold text-gray-600">Unit</th>
                                         <th className="text-right py-3 text-sm font-semibold text-gray-600">Rate</th>
-                                        <th className="text-right py-3 text-sm font-semibold text-gray-600">GST</th>
+                                        {shop.gstScheme !== 'COMPOSITION' && <th className="text-right py-3 text-sm font-semibold text-gray-600">GST</th>}
                                         <th className="text-right py-3 text-sm font-semibold text-gray-600">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {(c.items || []).map((item, idx) => {
                                         const base = (item.quantity || 0) * (item.sellingPrice || 0);
-                                        const tax = base * ((item.gstRate || 0) / 100);
+                                        const tax = shop.gstScheme === 'COMPOSITION' ? 0 : base * ((item.gstRate || 0) / 100);
                                         const total = base + tax;
                                         return (
                                             <tr key={idx}>
@@ -170,7 +170,7 @@ export default function DeliveryChallanDetail() {
                                                 <td className="py-3 text-sm text-gray-700 text-right">{item.quantity || 0}</td>
                                                 <td className="py-3 text-sm text-gray-600 text-right">{item.unit || 'PCS'}</td>
                                                 <td className="py-3 text-sm text-gray-700 text-right">₹{Number(item.sellingPrice || 0).toFixed(2)}</td>
-                                                <td className="py-3 text-sm text-gray-600 text-right">{item.gstRate || 0}%</td>
+                                                {shop.gstScheme !== 'COMPOSITION' && <td className="py-3 text-sm text-gray-600 text-right">{item.gstRate || 0}%</td>}
                                                 <td className="py-3 text-sm font-medium text-gray-900 text-right">₹{total.toFixed(2)}</td>
                                             </tr>
                                         );
@@ -186,7 +186,7 @@ export default function DeliveryChallanDetail() {
                                             <span className="text-gray-600">Subtotal:</span>
                                             <span className="font-medium text-gray-900">₹{(c.subtotal || 0).toFixed(2)}</span>
                                         </div>
-                                        {c.taxType !== 'NONE' && c.totalTax > 0 && (
+                                        {shop.gstScheme !== 'COMPOSITION' && c.taxType !== 'NONE' && c.totalTax > 0 && (
                                             <>
                                                 {c.taxType === 'CGST_SGST' && (
                                                     <>

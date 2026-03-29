@@ -171,8 +171,15 @@ export default function NewProformaInvoice() {
     // ── Totals ─────────────────────────────────────────────────────────────
     const calculateTotals = () => {
         const subtotal = items.reduce((s, i) => s + i.quantity * i.sellingPrice, 0);
-        const totalTax = taxType === 'NONE' ? 0
-            : items.reduce((s, i) => s + (i.quantity * i.sellingPrice * i.gstRate) / 100, 0);
+        // Skip all tax calculations for Composition Scheme
+        let totalTax;
+        if (shopSettings?.gstScheme === 'COMPOSITION') {
+            totalTax = 0;
+        } else if (taxType === 'NONE') {
+            totalTax = 0;
+        } else {
+            totalTax = items.reduce((s, i) => s + (i.quantity * i.sellingPrice * i.gstRate) / 100, 0);
+        }
         const grandTotalRaw = subtotal + totalTax - discount;
         const roundOff = Math.round(grandTotalRaw) - grandTotalRaw;
         return { subtotal, totalTax, grandTotalRaw, roundOff, finalTotal: Math.round(grandTotalRaw) };
@@ -371,15 +378,28 @@ export default function NewProformaInvoice() {
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Tax Type</label>
-                                <div className="flex rounded-xl overflow-hidden border border-gray-300 max-w-xs">
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                    Tax Type
+                                    {shopSettings?.gstScheme === 'COMPOSITION' && (
+                                        <span className="ml-2 text-xs font-normal text-orange-500">(Not applicable for Composition Scheme)</span>
+                                    )}
+                                </label>
+                                <div className={`flex rounded-xl overflow-hidden border max-w-xs ${shopSettings?.gstScheme === 'COMPOSITION' ? 'border-gray-200 opacity-60' : 'border-gray-300'}`}>
                                     {[
                                         { value: 'CGST_SGST', label: 'CGST + SGST' },
                                         { value: 'IGST', label: 'IGST' },
                                         { value: 'NONE', label: 'No Tax' },
                                     ].map(opt => (
-                                        <button key={opt.value} type="button" onClick={() => setTaxType(opt.value)}
-                                            className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${taxType === opt.value ? 'bg-violet-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                                        <button key={opt.value} type="button"
+                                            onClick={() => shopSettings?.gstScheme !== 'COMPOSITION' && setTaxType(opt.value)}
+                                            disabled={shopSettings?.gstScheme === 'COMPOSITION'}
+                                            className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${
+                                                shopSettings?.gstScheme === 'COMPOSITION'
+                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                    : taxType === opt.value
+                                                        ? 'bg-violet-600 text-white'
+                                                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                                            }`}>
                                             {opt.label}
                                         </button>
                                     ))}
@@ -418,7 +438,9 @@ export default function NewProformaInvoice() {
                                 <div className="col-span-1 text-center">Qty</div>
                                 <div className="col-span-1 text-center">Unit</div>
                                 <div className="col-span-2 text-center">Price (₹)</div>
-                                <div className="col-span-2 text-center">GST %</div>
+                                {shopSettings?.gstScheme === 'REGULAR' && (
+                                    <div className="col-span-2 text-center">GST %</div>
+                                )}
                                 <div className="col-span-1 text-right">Total</div>
                                 <div className="col-span-1" />
                             </div>
@@ -427,7 +449,9 @@ export default function NewProformaInvoice() {
                         <div className="space-y-3">
                             {items.map((item, index) => {
                                 const isService = item.itemType === 'service';
-                                const lineTotal = item.quantity * item.sellingPrice * (1 + (taxType === 'NONE' ? 0 : item.gstRate) / 100);
+                                const isComposition = shopSettings?.gstScheme === 'COMPOSITION';
+                                const effectiveGstRate = (isComposition || taxType === 'NONE') ? 0 : item.gstRate;
+                                const lineTotal = item.quantity * item.sellingPrice * (1 + effectiveGstRate / 100);
                                 const bothEnabled = enableProduct && enableService;
 
                                 return (
@@ -488,7 +512,10 @@ export default function NewProformaInvoice() {
                                                                                 }}
                                                                                 className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-purple-50 text-sm">
                                                                                 <span className="font-medium text-gray-800">{s.name}</span>
-                                                                                <span className="text-xs text-gray-400 ml-2">₹{s.rate} · {s.gstRate}% GST</span>
+                                                                                <span className="text-xs text-gray-400 ml-2">
+                                                                                    ₹{s.rate}
+                                                                                    {shopSettings?.gstScheme === 'REGULAR' && ` · ${s.gstRate}% GST`}
+                                                                                </span>
                                                                             </li>
                                                                         ))}
                                                                     </ul>
@@ -531,13 +558,15 @@ export default function NewProformaInvoice() {
                                                 </div>
                                             </div>
 
-                                            <div className="col-span-3 md:col-span-2">
-                                                <select value={item.gstRate} onChange={e => updateItem(index, 'gstRate', Number(e.target.value))}
-                                                    disabled={taxType === 'NONE'}
-                                                    className="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-400 focus:border-transparent bg-white disabled:bg-gray-100 disabled:text-gray-400">
-                                                    {[0, 0.25, 3, 5, 12, 18, 28, 40].map(r => <option key={r} value={r}>{r}%</option>)}
-                                                </select>
-                                            </div>
+                                            {shopSettings?.gstScheme === 'REGULAR' && (
+                                                <div className="col-span-3 md:col-span-2">
+                                                    <select value={item.gstRate} onChange={e => updateItem(index, 'gstRate', Number(e.target.value))}
+                                                        disabled={taxType === 'NONE'}
+                                                        className="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-400 focus:border-transparent bg-white disabled:bg-gray-100 disabled:text-gray-400">
+                                                        {[0, 0.25, 3, 5, 12, 18, 28, 40].map(r => <option key={r} value={r}>{r}%</option>)}
+                                                    </select>
+                                                </div>
+                                            )}
 
                                             <div className="col-span-10 md:col-span-1 text-right">
                                                 <span className="text-sm font-bold text-gray-800">₹{lineTotal.toFixed(2)}</span>

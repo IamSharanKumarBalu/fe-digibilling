@@ -178,7 +178,9 @@ export default function NewQuotation() {
   // ── Totals ─────────────────────────────────────────────────────────────
   const calculateTotals = () => {
     const subtotal = items.reduce((s, i) => s + i.quantity * i.sellingPrice, 0);
-    const totalTax = taxType === 'NONE' ? 0
+    // Skip all tax calculations for Composition Scheme
+    const totalTax = shopSettings?.gstScheme === 'COMPOSITION' ? 0
+      : taxType === 'NONE' ? 0
       : items.reduce((s, i) => s + (i.quantity * i.sellingPrice * i.gstRate) / 100, 0);
     const grandTotalRaw = subtotal + totalTax - discount;
     const roundOff = Math.round(grandTotalRaw) - grandTotalRaw;
@@ -431,7 +433,7 @@ export default function NewQuotation() {
                 <div className="col-span-1 text-center">Qty</div>
                 <div className="col-span-1 text-center">Unit</div>
                 <div className="col-span-2 text-center">Price (₹)</div>
-                <div className="col-span-2 text-center">GST %</div>
+                {shopSettings?.gstScheme === 'REGULAR' && <div className="col-span-2 text-center">GST %</div>}
                 <div className="col-span-1 text-right">Total</div>
                 <div className="col-span-1" />
               </div>
@@ -440,7 +442,9 @@ export default function NewQuotation() {
             <div className="space-y-3">
               {items.map((item, index) => {
                 const isService = item.itemType === 'service';
-                const lineTotal = item.quantity * item.sellingPrice * (1 + (taxType === 'NONE' ? 0 : item.gstRate) / 100);
+                const isComposition = shopSettings?.gstScheme === 'COMPOSITION';
+                const effectiveGstRate = (isComposition || taxType === 'NONE') ? 0 : item.gstRate;
+                const lineTotal = item.quantity * item.sellingPrice * (1 + effectiveGstRate / 100);
                 const bothEnabled = enableProduct && enableService;
 
                 return (
@@ -504,7 +508,9 @@ export default function NewQuotation() {
                                         }}
                                         className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-purple-50 text-sm">
                                         <span className="font-medium text-gray-800">{s.name}</span>
-                                        <span className="text-xs text-gray-400 ml-2">₹{s.rate} · {s.gstRate}% GST</span>
+                                        <span className="text-xs text-gray-400 ml-2">
+                                          ₹{s.rate}{shopSettings?.gstScheme === 'REGULAR' && ` · ${s.gstRate}% GST`}
+                                        </span>
                                       </li>
                                     ))}
                                   </ul>
@@ -551,13 +557,15 @@ export default function NewQuotation() {
                       </div>
 
                       {/* GST */}
-                      <div className="col-span-3 md:col-span-2">
-                        <select value={item.gstRate} onChange={e => updateItem(index, 'gstRate', Number(e.target.value))}
-                          disabled={taxType === 'NONE'}
-                          className="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white disabled:bg-gray-100 disabled:text-gray-400">
-                          {[0, 0.25, 3, 5, 12, 18, 28, 40].map(r => <option key={r} value={r}>{r}%</option>)}
-                        </select>
-                      </div>
+                      {shopSettings?.gstScheme === 'REGULAR' && (
+                        <div className="col-span-3 md:col-span-2">
+                          <select value={item.gstRate} onChange={e => updateItem(index, 'gstRate', Number(e.target.value))}
+                            disabled={taxType === 'NONE'}
+                            className="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white disabled:bg-gray-100 disabled:text-gray-400">
+                            {[0, 0.25, 3, 5, 12, 18, 28, 40].map(r => <option key={r} value={r}>{r}%</option>)}
+                          </select>
+                        </div>
+                      )}
 
                       {/* Line total */}
                       <div className="col-span-10 md:col-span-1 text-right">

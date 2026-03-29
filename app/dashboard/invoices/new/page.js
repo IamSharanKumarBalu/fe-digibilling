@@ -32,7 +32,6 @@ function NewInvoiceContent() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
   const [submitting, setSubmitting] = useState(false);
-  const [invoiceType, setInvoiceType] = useState('tax-invoice'); // 'tax-invoice' | 'bill-of-supply'
   const [fromQuotationId, setFromQuotationId] = useState(null); // Store quotation ID if converting
   const [quotationLoaded, setQuotationLoaded] = useState(false); // Track if quotation data was loaded
   const [fromProformaId, setFromProformaId] = useState(null); // Store proforma ID if converting
@@ -599,7 +598,11 @@ function NewInvoiceContent() {
     let totalTax = 0;
     let totalCess = 0;
 
-    if (taxType === 'CESS') {
+    // Skip all tax calculations for Composition Scheme
+    if (shopSettings?.gstScheme === 'COMPOSITION') {
+      totalTax = 0;
+      totalCess = 0;
+    } else if (taxType === 'CESS') {
       // When tax type is CESS, apply the manual CESS rate to all items
       totalCess = (subtotal * cessRate) / 100;
     } else {
@@ -679,7 +682,6 @@ function NewInvoiceContent() {
         customerState: selectedCustomer?.state,
         customerGstin: selectedCustomer?.gstin,
         invoiceDate,
-        invoiceType,
         items: invoiceItems,
         taxType,
         cessRate: taxType === 'CESS' ? cessRate : 0,
@@ -798,50 +800,6 @@ function NewInvoiceContent() {
           <h1 className="text-2xl font-bold text-gray-900">Create New Invoice</h1>
           <p className="mt-1 text-sm text-gray-600">Generate a new invoice for your customer</p>
         </div>
-
-        {/* Invoice Type Toggle — only visible when Bill of Supply is enabled in Settings */}
-        {shopSettings?.billOfSupplyEnabled && (
-          <div className="flex items-center gap-3 mb-6">
-            {[
-              { id: 'tax-invoice', label: 'Tax Invoice / E-Invoice', icon: '🧾' },
-              { id: 'bill-of-supply', label: 'Bill of Supply', icon: '📄' },
-            ].map(({ id, label, icon }) => {
-              const active = invoiceType === id;
-              return (
-                <label
-                  key={id}
-                  className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl border-2 cursor-pointer transition-all select-none ${active
-                    ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm shadow-orange-100'
-                    : 'border-gray-200 bg-white text-gray-500 hover:border-orange-300 hover:text-gray-700'
-                    }`}
-                >
-                  <input
-                    type="radio"
-                    name="invoiceType"
-                    value={id}
-                    checked={active}
-                    onChange={() => setInvoiceType(id)}
-                    className="sr-only"
-                  />
-                  <span className="text-base">{icon}</span>
-                  <span className="text-sm font-semibold">{label}</span>
-                  {/* dot indicator */}
-                  <span className={`ml-1 w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${active ? 'border-orange-500 bg-orange-500' : 'border-gray-300'
-                    }`}>
-                    {active && <span className="w-1 h-1 rounded-full bg-white" />}
-                  </span>
-                </label>
-              );
-            })}
-
-            {/* Subtle info badge */}
-            <span className="ml-2 text-xs text-gray-400">
-              {invoiceType === 'tax-invoice'
-                ? 'GST applicable — CGST/SGST or IGST will be charged'
-                : 'No GST — used for exempt / composition scheme sales'}
-            </span>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-6 text-black">
           {/* ── Customer Details ─────────────────────────────────── */}
@@ -993,13 +951,13 @@ function NewInvoiceContent() {
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Tax Type
-                  {invoiceType === 'bill-of-supply' && (
-                    <span className="ml-2 text-xs font-normal text-orange-500">(Not applicable for Bill of Supply)</span>
+                  {shopSettings?.gstScheme === 'COMPOSITION' && (
+                    <span className="ml-2 text-xs font-normal text-orange-500">(Not applicable for Composition Scheme)</span>
                   )}
                 </label>
                 <select value={taxType} onChange={(e) => setTaxType(e.target.value)}
-                  disabled={invoiceType === 'bill-of-supply'}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-all ${invoiceType === 'bill-of-supply'
+                  disabled={shopSettings?.gstScheme === 'COMPOSITION'}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-all ${shopSettings?.gstScheme === 'COMPOSITION'
                     ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
                     : 'border-gray-300'
                     }`}>
@@ -1008,7 +966,7 @@ function NewInvoiceContent() {
                   <option value="CESS">CESS (Manual Rate)</option>
                 </select>
               </div>
-              {taxType === 'CESS' && invoiceType !== 'bill-of-supply' && (
+              {taxType === 'CESS' && shopSettings?.gstScheme === 'REGULAR' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">CESS Rate (%) *</label>
                   <input type="number" min="0" step="0.01" value={cessRate}
@@ -1057,8 +1015,8 @@ function NewInvoiceContent() {
                   <div className="flex-1">Item</div>
                   <div className="w-20">Qty</div>
                   <div className="w-28">Price</div>
-                  {invoiceType === 'tax-invoice' && <div className="w-24">GST %</div>}
-                  {invoiceType === 'tax-invoice' && <div className="w-24">CESS %</div>}
+                  {shopSettings?.gstScheme === 'REGULAR' && <div className="w-24">GST %</div>}
+                  {shopSettings?.gstScheme === 'REGULAR' && <div className="w-24">CESS %</div>}
                   <div className="w-32">Total</div>
                   <div className="w-10"></div>
                 </div>
@@ -1236,8 +1194,8 @@ function NewInvoiceContent() {
                         />
                       </div>
 
-                      {/* GST % — hidden & locked for Bill of Supply */}
-                      {invoiceType === 'tax-invoice' ? (
+                      {/* GST % — hidden for Composition Scheme */}
+                      {shopSettings?.gstScheme === 'REGULAR' ? (
                         <div className="w-24">
                           <select
                             value={item.gstRate}
@@ -1256,8 +1214,8 @@ function NewInvoiceContent() {
                         </div>
                       ) : null}
 
-                      {/* CESS % — hidden for Bill of Supply */}
-                      {invoiceType === 'tax-invoice' ? (
+                      {/* CESS % — hidden for Composition Scheme */}
+                      {shopSettings?.gstScheme === 'REGULAR' ? (
                         <div className="w-24">
                           <input
                             type="number"
@@ -1273,7 +1231,10 @@ function NewInvoiceContent() {
                       ) : null}
 
                       <div className="w-32 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm">
-                        ₹{(item.quantity * item.sellingPrice * (1 + (item.gstRate + (item.cessRate || 0)) / 100)).toFixed(2)}
+                        ₹{shopSettings?.gstScheme === 'COMPOSITION'
+                          ? (item.quantity * item.sellingPrice).toFixed(2)
+                          : (item.quantity * item.sellingPrice * (1 + (item.gstRate + (item.cessRate || 0)) / 100)).toFixed(2)
+                        }
                       </div>
 
                       <button

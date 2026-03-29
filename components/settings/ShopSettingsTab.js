@@ -23,6 +23,7 @@ export default function ShopSettingsTab() {
         email: '',
         gstin: '',
         defaultTaxType: 'CGST_SGST',
+        gstScheme: 'REGULAR',
         logo: '',
     });
     const [saving, setSaving] = useState(false);
@@ -50,6 +51,7 @@ export default function ShopSettingsTab() {
                     email: data.email || '',
                     gstin: data.gstin || '',
                     defaultTaxType: data.defaultTaxType || 'CGST_SGST',
+                    gstScheme: data.gstScheme || 'REGULAR',
                     logo: data.logo || '',
                 });
                 if (data.logo) setLogoPreview(data.logo);
@@ -306,7 +308,52 @@ export default function ShopSettingsTab() {
                                 placeholder="22AAAAA0000A1Z5" maxLength={15} />
                         </div>
 
-                        <div className="sm:col-span-2 space-y-2">
+                        {/* GST Scheme Toggle */}
+                        <div className="col-span-2 space-y-3">
+                            <label className="block text-sm font-semibold text-gray-700">GST Scheme</label>
+                            <div className="flex items-center gap-3">
+                                {[
+                                    { id: 'REGULAR', label: 'Regular GST / Tax Invoice', icon: '🧾' },
+                                    { id: 'COMPOSITION', label: 'Composition Scheme / Bill of Supply', icon: '📄' },
+                                ].map(({ id, label, icon }) => {
+                                    const active = formData.gstScheme === id;
+                                    return (
+                                        <label
+                                            key={id}
+                                            className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl border-2 cursor-pointer transition-all select-none ${active
+                                                ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm shadow-orange-100'
+                                                : 'border-gray-200 bg-white text-gray-500 hover:border-orange-300 hover:text-gray-700'
+                                                }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="gstScheme"
+                                                value={id}
+                                                checked={active}
+                                                onChange={handleChange}
+                                                className="sr-only"
+                                            />
+                                            <span className="text-base">{icon}</span>
+                                            <span className="text-sm font-semibold">{label}</span>
+                                            {/* dot indicator */}
+                                            <span className={`ml-1 w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${active ? 'border-orange-500 bg-orange-500' : 'border-gray-300'
+                                                }`}>
+                                                {active && <span className="w-1 h-1 rounded-full bg-white" />}
+                                            </span>
+                                        </label>
+                                    );
+                                })}
+
+                                {/* Subtle info badge */}
+                                <span className="ml-2 text-xs text-gray-400">
+                                    {formData.gstScheme === 'REGULAR'
+                                        ? 'GST applicable — CGST/SGST or IGST will be charged'
+                                        : 'No GST — used for composition scheme / exempt sales'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
                             <label className="block text-sm font-semibold text-gray-700">Default Tax Type</label>
                             <select name="defaultTaxType" value={formData.defaultTaxType} onChange={handleChange}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all bg-white">

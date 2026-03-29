@@ -164,10 +164,18 @@ export default function NewDeliveryChallan() {
 
     const calculateTotals = () => {
         const subtotal = items.reduce((sum, item) => sum + item.quantity * item.sellingPrice, 0);
-        const totalTax = items.reduce((sum, item) => {
-            const base = item.quantity * item.sellingPrice;
-            return sum + (base * item.gstRate) / 100;
-        }, 0);
+        let totalTax = 0;
+
+        // Skip all tax calculations for Composition Scheme
+        if (shopSettings?.gstScheme === 'COMPOSITION') {
+            totalTax = 0;
+        } else {
+            totalTax = items.reduce((sum, item) => {
+                const base = item.quantity * item.sellingPrice;
+                return sum + (base * item.gstRate) / 100;
+            }, 0);
+        }
+
         const grandTotal = subtotal + totalTax - discount;
         const roundOff = Math.round(grandTotal) - grandTotal;
         const finalTotal = Math.round(grandTotal);
@@ -382,7 +390,7 @@ export default function NewDeliveryChallan() {
                                     <div className="w-20">Qty</div>
                                     <div className="w-24">Unit</div>
                                     <div className="w-28">Price</div>
-                                    <div className="w-24">GST %</div>
+                                    {shopSettings?.gstScheme === 'REGULAR' && <div className="w-24">GST %</div>}
                                     <div className="w-32">Total (incl. GST)</div>
                                     <div className="w-10" />
                                 </div>
@@ -391,7 +399,9 @@ export default function NewDeliveryChallan() {
                             {items.map((item, index) => {
                                 const bothEnabled = shopSettings?.enableProduct !== false && shopSettings?.enableService;
                                 const isService = item.itemType === 'service';
-                                const lineTotal = item.quantity * item.sellingPrice * (1 + item.gstRate / 100);
+                                const isComposition = shopSettings?.gstScheme === 'COMPOSITION';
+                                const effectiveGstRate = (isComposition) ? 0 : item.gstRate;
+                                const lineTotal = item.quantity * item.sellingPrice * (1 + effectiveGstRate / 100);
 
                                 return (
                                     <div key={index} className="flex flex-col p-4 bg-gray-50 rounded-lg border border-gray-200 gap-3">
@@ -454,7 +464,9 @@ export default function NewDeliveryChallan() {
                                                                                 }}
                                                                                 className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-purple-50 text-sm">
                                                                                 <span className="font-medium text-gray-800">{s.name}</span>
-                                                                                <span className="text-xs text-gray-400 ml-2">₹{s.rate} · {s.gstRate}% GST</span>
+                                                                                <span className="text-xs text-gray-400 ml-2">
+                                                                                    ₹{s.rate}{shopSettings?.gstScheme === 'REGULAR' && ` · ${s.gstRate}% GST`}
+                                                                                </span>
                                                                             </li>
                                                                         ))}
                                                                     </ul>
@@ -504,13 +516,15 @@ export default function NewDeliveryChallan() {
                                             </div>
 
                                             {/* GST % */}
-                                            <div className="w-24">
-                                                <select value={item.gstRate}
-                                                    onChange={(e) => updateItem(index, 'gstRate', Number(e.target.value))}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                                                    {[0, 0.25, 3, 5, 12, 18, 28, 40].map(r => <option key={r} value={r}>{r}%</option>)}
-                                                </select>
-                                            </div>
+                                            {shopSettings?.gstScheme === 'REGULAR' && (
+                                                <div className="w-24">
+                                                    <select value={item.gstRate}
+                                                        onChange={(e) => updateItem(index, 'gstRate', Number(e.target.value))}
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                                        {[0, 0.25, 3, 5, 12, 18, 28, 40].map(r => <option key={r} value={r}>{r}%</option>)}
+                                                    </select>
+                                                </div>
+                                            )}
 
                                             {/* Line total */}
                                             <div className="w-32 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm">

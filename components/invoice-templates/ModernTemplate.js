@@ -28,9 +28,9 @@ export default function ModernTemplate({ invoice, shopSettings }) {
                     </div>
 
                     <div className="text-right">
-                        <div className={`inline-block px-4 py-2 rounded-lg ${invoice.invoiceType === 'bill-of-supply' ? 'bg-green-600' : 'bg-blue-600'} text-white`}>
+                        <div className={`inline-block px-4 py-2 rounded-lg ${shopSettings?.gstScheme === 'COMPOSITION' ? 'bg-green-600' : 'bg-blue-600'} text-white`}>
                             <p className="text-sm font-medium">
-                                {invoice.invoiceType === 'bill-of-supply' ? 'BILL OF SUPPLY' : 'TAX INVOICE'}
+                                {shopSettings?.gstScheme === 'COMPOSITION' ? 'BILL OF SUPPLY' : 'TAX INVOICE'}
                             </p>
                         </div>
                         <p className="mt-4 text-2xl font-bold text-gray-900">{invoice.invoiceNumber}</p>
@@ -106,7 +106,7 @@ export default function ModernTemplate({ invoice, shopSettings }) {
                             <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">HSN</th>
                             <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Qty</th>
                             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">Price</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">GST %</th>
+                            {shopSettings?.gstScheme !== 'COMPOSITION' && <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">GST %</th>}
                             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">Total</th>
                         </tr>
                     </thead>
@@ -129,7 +129,7 @@ export default function ModernTemplate({ invoice, shopSettings }) {
                                 <td className="px-4 py-3 text-sm text-gray-900 text-center">{item.hsnCode || item.sacCode || '-'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-900 text-center">{item.quantity} {item.unit}</td>
                                 <td className="px-4 py-3 text-sm text-gray-900 text-right">₹{item.sellingPrice.toFixed(2)}</td>
-                                <td className="px-4 py-3 text-sm text-gray-900 text-center">{item.gstRate}%</td>
+                                {shopSettings?.gstScheme !== 'COMPOSITION' && <td className="px-4 py-3 text-sm text-gray-900 text-center">{item.gstRate}%</td>}
                                 <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">₹{item.totalAmount.toFixed(2)}</td>
                             </tr>
                         ))}
@@ -145,22 +145,24 @@ export default function ModernTemplate({ invoice, shopSettings }) {
                             <span className="text-gray-600">Subtotal:</span>
                             <span className="font-medium text-black">₹{invoice.subtotal.toFixed(2)}</span>
                         </div>
-                        {invoice.taxType === 'CGST_SGST' ? (
-                            <>
+                        {shopSettings?.gstScheme !== 'COMPOSITION' && (
+                            invoice.taxType === 'CGST_SGST' ? (
+                                <>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">CGST:</span>
+                                        <span className="font-medium text-black">₹{invoice.totalCGST.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">SGST:</span>
+                                        <span className="font-medium text-black">₹{invoice.totalSGST.toFixed(2)}</span>
+                                    </div>
+                                </>
+                            ) : (
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600">CGST:</span>
-                                    <span className="font-medium text-black">₹{invoice.totalCGST.toFixed(2)}</span>
+                                    <span className="text-gray-600">IGST:</span>
+                                    <span className="font-medium text-black">₹{invoice.totalIGST.toFixed(2)}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">SGST:</span>
-                                    <span className="font-medium text-black">₹{invoice.totalSGST.toFixed(2)}</span>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">IGST:</span>
-                                <span className="font-medium text-black">₹{invoice.totalIGST.toFixed(2)}</span>
-                            </div>
+                            )
                         )}
                         {invoice.discount > 0 && (
                             <div className="flex justify-between">
